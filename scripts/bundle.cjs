@@ -1,0 +1,10 @@
+const fs=require('node:fs');
+const path=require('node:path');
+const root=path.join(__dirname,'..');
+let html=fs.readFileSync(path.join(root,'dist/index.html'),'utf8');
+html=html.replace('<link rel="stylesheet" href="styles.css?v=3">',()=>'<style>'+fs.readFileSync(path.join(root,'dist/styles.css'),'utf8')+'</style>');
+for(const file of ['engine.js','storage.js','app.js'])html=html.replace(`<script src="${file}?v=3" defer></script>`,'');
+const scripts=['engine.js','storage.js','app.js'].map(file=>fs.readFileSync(path.join(root,'dist',file),'utf8')).join('\n;\n').replace(/<\/script/gi,'<\\/script');
+html=html.replace('</body>',()=>'<script>\n'+scripts+'\n</script>\n</body>');
+fs.writeFileSync(path.join(root,'QUEST Prototype.html'),html);
+console.log('Created self-contained QUEST Prototype.html');

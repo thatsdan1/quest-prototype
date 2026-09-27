@@ -1,0 +1,17 @@
+# Local environment and hosting metadata
+.openai/
+.sites-runtime/
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
+
+# Temporary files and dependency folders
+tmp/
+node_modules/
+__pycache__/
+*.log
+
+# Generated team archive; use GitHub's Download ZIP or the standalone HTML
+QUEST Prototype.zip

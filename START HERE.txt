@@ -1,0 +1,167 @@
+QUEST PROJECT — TEAM REVIEW PACKAGE
+===================================
+
+QUICK START — NO INSTALLATION NEEDED
+
+1. Download and unzip "QUEST Prototype.zip".
+   If downloading from GitHub, sign in with collaborator access, choose
+   "Code" -> "Download ZIP", and unzip that download instead.
+   Windows: right-click the ZIP and choose "Extract All".
+   Mac: double-click the ZIP.
+
+2. Open the extracted folder: "QUEST Prototype" for the team package,
+   or "quest-prototype-main" for a GitHub download.
+
+3. Double-click "QUEST Prototype.html".
+   If it opens as text, right-click it, choose "Open With", and select
+   a current web browser such as Chrome, Edge, Firefox, or Safari.
+
+4. The production board opens with fictional sample jobs.
+   No Codex account, sign-in, internet connection, Node.js, or Python
+   installation is required for this method.
+
+Open the HTML file after extracting the ZIP; do not run it inside an
+email preview or the ZIP viewer. You can also send just the standalone
+"QUEST Prototype.html" to someone who only needs to try the app.
+
+WHAT TO TRY — A FIVE-MINUTE WALKTHROUGH
+
+1. Production board
+   Look at the start step, current/end step, shift goal, and target gap.
+   Try Day view, Week view, and the process, shift, and work-cell filters.
+
+2. Architecture
+   Open Architecture in the sidebar. Click a module to see what it does,
+   what works in this demo, and what still needs stakeholder validation.
+
+3. Process setup
+   Inspect the sample step durations and productive-time budget.
+   Timing changes affect new assignments; existing assignments retain
+   their saved timing snapshot.
+
+4. Add a job and test the automatic goal
+   Return to Production board and select Add job. With the original
+   A320 hand-layup sample configuration, enter:
+
+     Job number:                 TEAM-DEMO-01
+     Part / assembly:            Demo panel
+     Operator name(s):           Demo Operator
+     Work cell:                  Cell 01
+     Assignment date:            Today
+     Shift:                      Shift 1
+     Process:                    A320 hand layup
+     Start step (completed):     2
+     Planned productive minutes: 105
+     Overtime minutes:           0
+
+   The calculated goal should be step 4.
+   Change overtime to 60 minutes: the goal should become step 5.
+   Set the actual end step to 4, add a comment, and save.
+   The board should show a gap of -1.
+
+   If you changed the sample timing configuration, the result may differ.
+   Use a unique job number when repeating this exercise for the same shift.
+
+5. End-of-shift outcome
+   Update that job and select "Shift finished". With actual step 4 and
+   goal step 5, its status becomes "Below target".
+
+6. History and insights
+   Open Shift history to see the new snapshots and use Export CSV if you
+   want to send those records to the team. Insights shows goal attainment
+   and work-cell summaries for the selected date/week and filters.
+
+7. TV display
+   Return to Production board and select TV display.
+   The large table shows start, goal, actual, and gap. Longer lists rotate
+   pages every 20 seconds. Use the next-page button to advance manually.
+   Press Escape or choose Exit TV display to return.
+
+YOUR DATA AND YOUR TEAM'S DATA
+
+- The package starts with built-in fictional sample records and timings.
+  It does not contain edits made in someone else's browser.
+- Changes are saved in the browser on your device when storage is available.
+  Teammates do not see one another's changes automatically.
+- Opening the file in another browser or moving it to a different location
+  may create a separate local dataset. The file version and local-server
+  version also have separate storage.
+- Export CSV from Shift history to share the selected records. CSV is a
+  history report, not a full backup of process settings or an import file.
+- Clearing browser storage or using Reset demo data removes local edits.
+  Reset demo data also restores the sample timing configuration.
+- All production data and timings are fictional. SAP, MPP, SharePoint, and
+  other ST systems are not connected. The architecture is a hypothesis.
+
+OPTIONAL — RUN THROUGH A LOCAL SERVER
+
+Use this if your browser restricts saving from a directly opened HTML file,
+or if you want to edit and test the source files. Python 3 is required for
+this optional method only.
+
+MAC / LINUX
+  Open Terminal, type "cd " (with a space), drag the extracted
+  project folder into Terminal, and press Enter.
+  Then run:
+
+  python3 -m http.server 4173 --bind 127.0.0.1 --directory dist
+
+WINDOWS
+  Open the extracted folder in File Explorer. Click the address bar,
+  type "cmd", and press Enter. In the command window, run:
+
+  py -m http.server 4173 --bind 127.0.0.1 --directory dist
+
+  If the Python launcher "py" is unavailable but Python 3 is installed,
+  use "python" instead of "py".
+
+BOTH
+  Keep the terminal window open and visit:
+
+  http://127.0.0.1:4173/
+
+  Press Ctrl+C in the terminal when finished.
+  If port 4173 is already in use, replace it with 4174 in both the command
+  and the browser address.
+
+  This address works only on the computer running the server. It is not
+  a team-sharing link. Send the ZIP or HTML file for independent review.
+
+TROUBLESHOOTING
+
+- The page displays source code: open the HTML file with a web browser.
+- The board is empty: check the date and filters. Select A320 hand layup,
+  all work cells, and an appropriate shift. The second sample process may
+  have no assignments until you add one.
+- No jobs today: saved examples may belong to an earlier date. The app
+  initially opens the latest saved assignment date when today is empty.
+- A change did not save: check for an error under the form, such as an end
+  step outside the sequence or a duplicate job/date/shift assignment.
+- Changes disappear: check the storage status, avoid private browsing for
+  repeatable demos, or use the optional local-server method.
+- The localhost page cannot be reached: start the server on your own
+  computer first, or use the standalone HTML file instead.
+
+WHAT IS INCLUDED
+
+QUEST Prototype.html   Complete app in one offline HTML file
+START HERE.txt         These team run instructions
+README.md              Developer setup and prototype scope
+ARCHITECTURE.md        Architecture diagram, rules, and open decisions
+dist/                  Editable HTML, CSS, JavaScript, and sample data
+scripts/bundle.cjs     Rebuilds the standalone HTML after source changes
+tests/engine.test.cjs  Goal-calculation and storage checks
+
+For developers with Node.js installed, run from the extracted folder:
+
+  node --test tests/engine.test.cjs
+  node scripts/bundle.cjs
+
+Edit files under dist/, then rebuild the standalone HTML before sending an
+updated version. A different computer does not need Node.js just to open it.
+
+SUGGESTED TEAM FEEDBACK
+
+Which fields are missing or confusing? Is the TV view readable? Do the goal,
+overtime, and completion rules match the intended workflow? Which architecture
+assumptions should the next ST stakeholder interview validate?
