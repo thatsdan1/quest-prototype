@@ -26,56 +26,63 @@ email preview or the ZIP viewer. You can also send just the standalone
 
 WHAT TO TRY — A FIVE-MINUTE WALKTHROUGH
 
-1. Production board
-   Look at the start step, current/end step, shift goal, and target gap.
-   Try Day view, Week view, and the process, shift, and work-cell filters.
+1. Weekly assemblies (the opening view)
+   Click a day to review the 36 demo cells. Darker green means more of a
+   unit's standard hours are complete. Each unit has "Assign next shift";
+   each cell has "Assign job". Days after today show as Upcoming.
 
-2. Architecture
-   Open Architecture in the sidebar. Click a module to see what it does,
-   what works in this demo, and what still needs stakeholder validation.
+2. Daily goals
+   Select Daily goals. Each card leads with its cell and shows Start, Goal,
+   and Stop by step name. Finished shifts use the workbook colours:
+   red, yellow, green, purple. The key sits above the cards.
 
-3. Process setup
-   Inspect the sample step durations and productive-time budget.
-   Timing changes affect new assignments; existing assignments retain
-   their saved timing snapshot.
+3. Add a job: the same fields as one block of the Excel board
+   Select Add job (or Assign job on an empty cell). Cell, date, and shift
+   come from where you clicked; use Change to adjust them. Enter:
 
-4. Add a job and test the automatic goal
-   Return to Production board and select Add job. With the original
-   A320 hand-layup sample configuration, enter:
+     Name(s):   Demo Operator
+     Job #:     TEAM-DEMO-01
+     Hand:      LH
+     Part:      A320 inner bondment
+     Start:     5 · Peel & prep skin
 
-     Job number:                 TEAM-DEMO-01
-     Part / assembly:            Demo panel
-     Operator name(s):           Demo Operator
-     Work cell:                  Cell 01
-     Assignment date:            Today
-     Shift:                      Shift 1
-     Process:                    A320 hand layup
-     Start step (completed):     2
-     Planned productive minutes: 105
-     Overtime minutes:           0
+   The calculated goal should be step 13, "3rd debulk".
+   Open More options and set overtime to 1 hour: the goal becomes
+   step 14, "Lay up ply level 6".
+   Set Stop to "13 · 3rd debulk", add a comment, and save.
+   The card should show a shift gap of -1 step.
 
-   The calculated goal should be step 4.
-   Change overtime to 60 minutes: the goal should become step 5.
-   Set the actual end step to 4, add a comment, and save.
-   The board should show a gap of -1.
-
-   If you changed the sample timing configuration, the result may differ.
+   If you changed the sample route in Process setup, the result may differ.
    Use a unique job number when repeating this exercise for the same shift.
 
-5. End-of-shift outcome
-   Update that job and select "Shift finished". With actual step 4 and
-   goal step 5, its status becomes "Below target".
+4. End-of-shift colour
+   Update that job and tick "Shift finished". It earned 8.0 standard
+   hours against a 9-hour budget (8 h + 1 h overtime), so it turns
+   "Yellow · 8.0 h". Without the overtime hour it would be green.
 
-6. History and insights
-   Open Shift history to see the new snapshots and use Export CSV if you
-   want to send those records to the team. Insights shows goal attainment
-   and work-cell summaries for the selected date/week and filters.
+5. Shift handoff and history
+   Choose Next shift on your new job and enter a different demo operator.
+   Start carries forward as "14 · Lay up ply level 6"; save the new shift.
+   Choose History on the card to verify both names are still recorded.
+   Production-day order is 3, 1, 2; Shift 2 rolls into the next day.
 
-7. TV display
-   Return to Production board and select TV display.
-   The large table shows start, goal, actual, and gap. Longer lists rotate
-   pages every 20 seconds. Use the next-page button to advance manually.
-   Press Escape or choose Exit TV display to return.
+6. Supervisor review
+   Open Supervisor review in the sidebar. It counts red, yellow, green,
+   and purple shifts per operator over 1, 2, or 4 weeks and flags repeats.
+   Click a purple shift to open that job's history. This page has no
+   login in the prototype, and what purple means is still to be confirmed.
+
+7. Process setup
+   Inspect the named route, shift budget, goal rule, and colour bands.
+   "Paste a route from a spreadsheet" accepts lines like "Peel skin, 60"
+   or two columns copied from Excel. "Restore standard route" reloads the
+   sample route. Saving creates a new revision; existing records keep theirs.
+
+8. History, TV, insights, architecture
+   Shift history lists every update; Export CSV sends the selected records.
+   TV display shows start, goal, stop, gap, and hours in large type; long
+   lists rotate every 20 seconds and Escape exits. Insights and
+   Architecture explain goal attainment and the proposed system.
 
 YOUR DATA AND YOUR TEAM'S DATA
 
@@ -90,7 +97,8 @@ YOUR DATA AND YOUR TEAM'S DATA
   history report, not a full backup of process settings or an import file.
 - Clearing browser storage or using Reset demo data removes local edits.
   Reset demo data also restores the sample timing configuration.
-- All production data and timings are fictional. SAP, MPP, SharePoint, and
+- All production data, step names, and timings are fictional. A route pasted
+  into Process setup stays in your browser. SAP, MPP, SharePoint, and
   other ST systems are not connected. The architecture is a hypothesis.
 
 OPTIONAL — RUN THROUGH A LOCAL SERVER
@@ -130,7 +138,7 @@ BOTH
 TROUBLESHOOTING
 
 - The page displays source code: open the HTML file with a web browser.
-- The board is empty: check the date and filters. Select A320 hand layup,
+- The board is empty: check the date and filters. Select A320 inner bondment,
   all work cells, and an appropriate shift. The second sample process may
   have no assignments until you add one.
 - No jobs today: saved examples may belong to an earlier date. The app
@@ -148,9 +156,11 @@ QUEST Prototype.html   Complete app in one offline HTML file
 START HERE.txt         These team run instructions
 README.md              Developer setup and prototype scope
 ARCHITECTURE.md        Architecture diagram, rules, and open decisions
+MEETING FOLLOW-UP.md   Meeting changes, workbook findings, pending decisions
 dist/                  Editable HTML, CSS, JavaScript, and sample data
 scripts/bundle.cjs     Rebuilds the standalone HTML after source changes
-tests/engine.test.cjs  Goal-calculation and storage checks
+scripts/package.py     Rebuilds and checks the team ZIP
+tests/engine.test.cjs  Goal, colour, route, and storage checks
 
 For developers with Node.js installed, run from the extracted folder:
 
@@ -163,5 +173,5 @@ updated version. A different computer does not need Node.js just to open it.
 SUGGESTED TEAM FEEDBACK
 
 Which fields are missing or confusing? Is the TV view readable? Do the goal,
-overtime, and completion rules match the intended workflow? Which architecture
+overtime, colour, and completion rules match the intended workflow? Which architecture
 assumptions should the next ST stakeholder interview validate?
