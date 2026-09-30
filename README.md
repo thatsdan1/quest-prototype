@@ -1,6 +1,6 @@
-# QUEST production board — prototype v2
+# QUEST production board — prototype v4
 
-A working local prototype based on the provided site-visit sketches and architecture add-ons. All operators, jobs, assemblies, process timings, and comments are fictional. Source attachments are not bundled.
+A working local prototype based on the site-visit sketches, the 9/28 client meeting, and a read-only review of ST's production-board workbook. All operators, jobs, step names, timings, and comments are fictional. Source attachments are not bundled.
 
 ## Get the project from GitHub
 
@@ -33,48 +33,60 @@ Then visit http://127.0.0.1:4173. All fonts, icons, scripts, and styles use loca
 
 ## Suggested demonstration
 
-1. **Architecture**: explain the four modules and proposed ST-approved hosting/storage boundary. Click a module to inspect its details and unresolved decisions.
-2. **Process setup**: inspect sample step durations and the productive-time budget. These drive the goal engine, independently from board rendering.
-3. **Production board → Add job**: enter a fictional job, name, part, and start step 2. With the default hand-layup configuration, 105 productive minutes gives goal 4; 60 overtime minutes extends that goal to 5.
-4. Set the actual end to 4 and save. The board shows a gap of −1. Mark the shift finished to show the final below-target outcome.
-5. **Shift history**: inspect the saved snapshot or export the selected records to CSV. History includes operators, gap, overtime, and the timing revision.
-6. **TV display**: large tabular output shows start, goal, actual, and gap. Pages rotate every 20 seconds when needed; the next-page button advances manually. Escape exits TV mode.
-7. Explore **Week view**, **Insights**, and process/work-cell/shift filters.
+1. **Weekly assemblies** opens first. Pick a day to see the 36-cell grid, shaded by completed standard hours. Use **Assign job** on an empty cell or **Assign next shift** on a unit.
+2. **Daily goals**: each card leads with its cell and shows Start, Goal, and Stop by step name. Finished shifts take the workbook colours: red, yellow, green, and purple.
+3. **Add job**: the form mirrors one workbook block (Name(s), Job #, Hand, Part, Start, Goal, Stop, Comment); cell, date, and shift come from where you clicked. Start on "5 · Peel & prep skin" and the goal is "13 · 3rd debulk". Add 1 overtime hour under **More options** and it becomes "14 · Lay up ply level 6".
+4. Set Stop to "13 · 3rd debulk" and save: the gap is −1 step. Update the job and tick **Shift finished**: the shift turns **Yellow · 8.0 h**, 8 standard hours against a 9-hour budget.
+5. **Next shift** on the same card carries Start forward as "14 · Lay up ply level 6". **History** shows both operators.
+6. **Supervisor review** counts colours per operator over 1, 2, or 4 weeks, flags repeated purples or reds, and lists every purple shift.
+7. **Process setup** holds the named route, shift budget, goal rule, and colour bands. Paste a route from a spreadsheet, or use **Restore standard route**.
+8. **Shift history → Export CSV**, **TV display** (Escape exits), **Insights**, and **Architecture**.
 
 ## What is implemented
 
-- Supervisor input and day/week board.
-- Automatic goals from sequential step timings, productive minutes, and overtime.
-- Configurable processes; per-assignment timing snapshots.
-- Actual vs target, completion estimates, and labeled status colors.
+- Named routes: Start and Stop are chosen by step name, and cards, TV, history, and CSV show names.
+- Goals from the workbook's nearest-step rule (default) or the v3 whole-step rule, plus overtime in hours.
+- Workbook colour bands for finished shifts; training shifts and reported blockers are not coloured.
+- Supervisor review of colours by operator, with review flags and drill-down to job history.
+- Entry form shaped like the workbook block; click a cell to assign; next-shift handoffs with per-job history.
+- Separate weekly assembly grid (36 sample cells, three shifts) and daily operator goals.
+- Route editor with spreadsheet paste import and restore; saved revisions keep names and timings for older records.
 - TV display with screen-height-aware pagination.
 - Device-local saved records, shift history, CSV export, and work-cell insights.
 - Interactive architecture hypothesis and constraints.
 - Optional browser-agent tools for reading the board or opening a form; they do not save changes.
 
+## Workbook reference
+
+The supplied workbook was inspected read-only to match its fields, shift order, goal formula, and colour rules. It is not bundled or connected, and none of its step names, timings, or employee names are in this repository. Paste a route into Process setup to try real standard work in your own browser. See **MEETING FOLLOW-UP.md** for the workbook findings and open decisions.
+
 ## Prototype limits
 
-- Timings and production data are samples. Step-based progress is not labor efficiency.
-- The displayed shift lead is illustrative; there is no application authentication or role enforcement.
+- Routes, timings, and production data are samples. Completion by standard hours is not labor efficiency or quality acceptance.
+- Purple is shown exactly as the workbook computes it. Whether it means strong output or a quality concern is not decided, and flags are prompts for review.
+- The displayed shift lead is illustrative; there is no application authentication or role enforcement, including on Supervisor review.
 - Browser storage is local to the device, browser, and origin. It is not shared, enterprise-approved storage. File-based storage behavior varies by browser; the local HTTP version is recommended for repeatable demos.
 - TV mode is a presentation mode, not a permission boundary. Another device will not receive updates without a shared backend.
-- Old records retain their timing snapshots. Changing process configuration affects newly created assignments. Selecting a process again in an edit form deliberately loads its current timings.
+- Old records keep their route revision. Changing or importing a route affects new assignments. Saved job, part, and shift identity is locked in the update form. A handoff keeps the unit's route and takes the current default shift budget.
 - If no jobs exist today, the demo initially opens the latest date with saved assignments; the date control shows the actual selected date.
 - SAP, ERP, MPP, SharePoint, Excel ingestion, and approved internal hosting are not connected. There are no public-internet runtime dependencies.
-- TAC rules, overtime treatment beyond added productive minutes, parallel work, rework, operator comparisons, and final unit acceptance require stakeholder validation.
+- TAC rules, transition routes, parallel work, rework, operator comparisons, and final unit acceptance require stakeholder validation.
 - History is a local prototype activity log, not a tamper-proof audit trail. Same-origin tabs use storage events; concurrent writers have no conflict resolution.
 
 ## Source and verification
 
-- `dist/index.html` — accessible shell, navigation, and forms.
-- `dist/styles.css` — supervisor, TV, weekly, architecture, and responsive layouts.
-- `dist/app.js` — UI, process configuration, sample data, and workflow coordination.
-- `dist/engine.js` — pure, independently testable goal/progress logic.
-- `dist/storage.js` — replaceable local-storage adapter and history snapshots.
-- `ARCHITECTURE.md` — flow diagram, formulas, boundaries, constraints, and open decisions.
-- `tests/engine.test.cjs` — boundary tests for sequential goals, overtime, completion, snapshots, and storage failures.
-- `scripts/bundle.cjs` — regenerates the self-contained HTML deliverable.
+- `dist/index.html` — accessible shell, navigation, and dialogs.
+- `dist/styles.css` — supervisor, TV, weekly, review, architecture, and responsive layouts.
+- `dist/app.js` — UI, sample routes and seed data, process configuration, and workflow coordination.
+- `dist/engine.js` — pure goal rules, hours earned, colour bands, and completion.
+- `dist/production.js` — assignment identity, shift order, handoff drafts, overtime conversion, assembly rollups, route paste parsing, and operator summaries.
+- `dist/storage.js` — replaceable local-storage adapter, history snapshots, and CSV cell encoding.
+- `ARCHITECTURE.md` — flow diagram, formulas, colour bands, boundaries, constraints, and open decisions.
+- `MEETING FOLLOW-UP.md` — 9/28 feedback, workbook findings, and pending decisions.
+- `tests/engine.test.cjs` — goal rules, workbook colour boundaries, overtime, completion, handoffs, route parsing, operator summaries, snapshots, CSV, and storage failures.
+- `scripts/bundle.cjs` — regenerates the self-contained HTML deliverable and fails if an asset tag is missing.
+- `scripts/package.py` — builds and verifies the team ZIP.
 
-Run calculation/storage tests with `node --test tests/engine.test.cjs`. Regenerate the offline deliverable after changes with `node scripts/bundle.cjs`.
+Run the tests with `node --test tests/engine.test.cjs`. Regenerate the offline deliverable after changes with `node scripts/bundle.cjs`, then `python3 scripts/package.py` for the team ZIP.
 
-For the next iteration, bring the course rubric/deadline, a sanitized board or data export, approved process timing rules, actual shift/work-cell names, and ST's hosting/storage direction.
+For the next iteration, confirm the meaning of purple, the goal rule and Start convention, the approved routes, the cell roster and shift boundaries, and ST's hosting/storage direction.
