@@ -48,3 +48,65 @@ In the workbook, purple marks a shift that earned 8.05 standard hours or more, w
 5. The approved internal data source, supervisor permissions, and hosting (SharePoint or local network).
 
 Run and share instructions are in `START HERE.txt`. The team ZIP and standalone HTML are rebuilt from the same source; sending either does not send browser-local edits.
+
+
+## October 1 follow-up implemented in v5
+
+The lead-entered-hours approach was approved for this iteration. TV now offers a paged cell grid in addition to operator goals. Direct edit/removal with restoration makes mistaken entries recoverable. A stable unit identity survives job-number corrections and links shifts without replacing earlier operators.
+
+A separate Operator day view shows multiple units per person. The Next unit action carries the same shift/operator into a new record and offers the remaining manually allocated shift budget. For example, 3 h allocated from a 6.5 h shift leaves 3.5 h. Targets use that assignment allocation plus overtime. Optional actual hands-on and waiting hours/reasons are retained in history and CSV; they are not inferred from a badge event or calculated standard hours. Blank observations stay unknown.
+
+Pending validation: agreed split-shift colour rules, individual credit for shared work, delay categorisation, official standard times, break/shift boundaries, repeated visits to one unit in a shift, and any time-clock integration. Partial allocations are omitted from workbook colour comparisons rather than assigning unapproved bands. Supervisor access remains a screen without authentication.
+
+
+## October 1 answer and site-visit notes → v6
+
+ST's answer to "may leads enter hours?": yes, for now. Hours per unit come from operations managers; every person works an 8-hour day (40 h a week, overtime beyond); step times come from the industrial-engineering time study (an average of observed builds across experience levels). The board should display the work, not try to shorten ply times.
+
+| Note | v6 |
+| --- | --- |
+| Floor screen should show completion by cell | TV display → Unit / cell grid (v5) |
+| History of the unit, not just the operator | Unit history opens with whole-unit totals: time study earned, hours to build, waiting by reason |
+| Continue the existing job instead of adding one | Add job starts a new unit; Update / Next shift / Next unit continue it (v4–v5) |
+| Delete button for errors | Remove and Restore (v5) |
+| Make sure each person has their required hours, automatically | Each person's day = standard day + additional hours entered by the lead; regular hours fill in from what is left, across cells |
+| Dead time from unit to unit | Operator day shows time not booked to any unit or training; Insights lists it per person |
+| Track the unit and the worker separately; avoid "ghost problems" | People and Units are separate tables. Each job carries its own hours, so one unit no longer absorbs a whole badge day |
+| Stuck waiting on Quality bills 8 h to the operation | Waiting hours with a reason are their own field, taken off the hours to build |
+| Insights should name the issues ("Tooling", "Waiting for forklift"), 80/20 | Why units wait · 80/20, with the units behind each reason |
+| Two people in one cell should not mean 16 h of work; a trainer bounces between cells | Two names share one plan. A trainer's floor time is entered as training, not as a second plan |
+
+Pending with ST stakeholders and Operations: clock-time entry for finer dead-time analysis (the model supports it, the form does not ask); and any AI "copilot" analysis, which must not receive proprietary data.
+
+## Supervisor request: alert when stations are behind
+
+Station alerts list every station that is blocked, at risk, or (since the follow-up below) losing process efficiency to waiting on the selected day, with the reasons, the waiting reason, and the lead's comment. A bell shows the count; the weekly grid and TV outline the stations, and the TV shows a banner. Defaults reuse the workbook margins (0.5 h short = warning, 1.5 h = critical) and escalate repeated misses at one station. The supervisor can acknowledge an alert, and the rules are editable.
+
+To confirm with the supervisor: whether "behind" should also mean behind pace during a shift (needs shift clock times and stops updated during the shift); the right margins and repeat count; whether some alerts should reach her off the floor (email, Teams, phone), which needs an approved channel; and who may acknowledge alerts.
+
+## Follow-up answers: training, trainees, overtime
+
+| Answer | Prototype |
+| --- | --- |
+| Operators also train in the training center. It isn't in the manpower plan, so it should be adjustable: the lead adds it when it happens | Operator day → *Training center and off-unit time*: person, hours, reason. It counts toward the person's day, not toward any unit or goal, and can be removed |
+| Whether trainee time counts as build time: not a concern right now | Unchanged: trainee time counts toward the unit |
+| No approval loop for overtime. The lead enters the extra hours when someone stays (4 extra → a 12 h goal) | *Additional hours worked* sits under Start in the job form. The person's day and goal grow to match; there is no approval form |
+| The supervisor wants to check that people with overtime on their time cards did that much work, as a filter in Insights rather than an alert | Insights → People → *Show: Worked additional hours* lists each day over 8 h with the hours recorded and the standard hours earned on that person's assignments |
+
+## Follow-up: one hours total; waiting is its own thing
+
+| Answer | Prototype |
+| --- | --- |
+| The hours section had too many separate variables; wrap it into one total | The per-person hours table is gone. The form has one *Additional hours worked* field and one *Waiting* box; the goal shows *8 h regular + 4 h additional − 2.5 h waiting = 9.5 h to build* |
+| Additional hours worked belongs up with the main fields, with a reason | It sits under Start; the comment holds the reason |
+| Waiting (for a tool, for example) is its own thing and should not count against the operator | Waiting counts toward the person's day (they still worked 12 h) but comes off the hours to build, so the goal and colour are judged on 9.5 h. The unit and station still show the 2.5 h, and the reason feeds the 80/20 chart and a *Waiting* station alert |
+
+## Follow-up: person grade vs. process efficiency
+
+| Answer | Prototype |
+| --- | --- |
+| Colour bands: on an 8 h build, 8.05 h is purple, 7.5 h green, 6.5 h yellow; with 4 h overtime the bands move to 12.05 h | Unchanged: bands are relative to the hours to build |
+| Person grade = completed tasks ÷ (total time − waiting). 8 h done, 11 h total, 3 h forklift wait still earns green or purple | Shown as *Person grade* on job cards, the form (for the chosen stop), Operator day, unit history, Insights → People, and Supervisor review |
+| Process grade = 1 − waiting ÷ total time; 3 h waiting is about 72% | Shown as *Process* on the same views and on Insights → Units for whole units |
+| Alerts should be about the process; the person can be a separate tab | Station alerts fire on Blocked, At risk, and process efficiency below 90% (warning) or 75% (critical); the person grade is shown in the alert for context only. Supervisor review is the per-person tab |
+

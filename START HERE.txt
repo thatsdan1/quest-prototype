@@ -47,7 +47,7 @@ WHAT TO TRY — A FIVE-MINUTE WALKTHROUGH
      Start:     5 · Peel & prep skin
 
    The calculated goal should be step 13, "3rd debulk".
-   Open More options and set overtime to 1 hour: the goal becomes
+   Set "Additional hours worked" to 1: the goal becomes
    step 14, "Lay up ply level 6".
    Set Stop to "13 · 3rd debulk", add a comment, and save.
    The card should show a shift gap of -1 step.
@@ -56,7 +56,7 @@ WHAT TO TRY — A FIVE-MINUTE WALKTHROUGH
    Use a unique job number when repeating this exercise for the same shift.
 
 4. End-of-shift colour
-   Update that job and tick "Shift finished". It earned 8.0 standard
+   Update that job and tick "Assignment finished". It earned 8.0 standard
    hours against a 9-hour budget (8 h + 1 h overtime), so it turns
    "Yellow · 8.0 h". Without the overtime hour it would be green.
 
@@ -83,6 +83,70 @@ WHAT TO TRY — A FIVE-MINUTE WALKTHROUGH
    TV display shows start, goal, stop, gap, and hours in large type; long
    lists rotate every 20 seconds and Escape exits. Insights and
    Architecture explain goal attainment and the proposed system.
+
+NEW IN V6: STATION ALERTS
+
+- The bell in the top bar counts stations that need attention today.
+  Click it (or Station alerts in the sidebar). Cell 04 is blocked and
+  Cell 02 is at risk.
+- Go back one day: Cell 05 waited 1.5 h on tooling, a process efficiency
+  of 81%. It is critical because it keeps happening at that station.
+  Choose Acknowledge.
+- Open TV display: a banner lists the stations still needing attention
+  and their cells are outlined. Acknowledged stations drop off.
+- Alerts follow the process, not the person. Process efficiency =
+  1 - waiting / total hours. Save a job with 3 h waiting in an 11 h day
+  (8 h + 3 h additional): the message says the station is at 73%.
+  The operator's person grade = standard hours completed /
+  (total hours - waiting), so the wait is not held against them.
+- Alert rules (bottom of the page) set the warning and critical lines
+  (90% and 75%) and how many in a row escalate.
+
+NEW IN V6: OPERATIONS HOURS, PEOPLE AND UNITS
+
+- Open Operator day. Operations sets the standard day (8 h). Leads add
+  training-center time there when it happens; it fills the person's
+  day without touching any unit.
+- Go back one day. Each person has a bar: green building, amber waiting,
+  blue training, grey time not booked to any unit. Jordan Lee spent 2 h
+  in the training center. Harper Moss, a trainer, has 8 h of training
+  on the floor.
+- On the board, choose Add job. Set "Additional hours worked" to 4:
+  the goal covers 12 h. In the Waiting box enter 2.5 hours waiting for
+  "Tooling / fixture". The goal line reads
+  8.0 h regular + 4.0 h additional - 2.5 h waiting = 9.5 h to build.
+  The wait is not held against the operator: stop at the goal, finish,
+  and save, and the shift is green. The station still alerts as
+  Waiting. No approval step; the comment holds the reason.
+- Two names on a job share one plan; they do not double it.
+- Open Insights in week view:
+    Why units wait . 80/20  - waiting hours by reason, the top reasons
+                              highlighted; open one to see its units.
+    Units                   - time-study hours earned vs. hours to
+                              build and waiting, for each whole unit.
+    People                  - each day (8 h + additional) vs. booked
+                              hours. Show "Worked additional hours" to
+                              check those days against standard hours
+                              earned.
+- Open any unit's history for its whole-unit totals.
+- Hours are lead-entered; no time clock or Kronos connection is involved.
+
+CORRECT MISTAKES
+
+Use Edit on the weekly unit or Update job on a daily card. Job number,
+name, cell, date and shift can be corrected; earlier values remain in
+Shift history. Renaming a unit keeps its assignments linked.
+Use Remove to choose the whole unit or one assignment. Removed jobs in
+the sidebar provides Restore. Removing the latest assignment alone may
+reveal earlier recorded progress. Reset demo is a separate destructive action.
+
+TV DISPLAY
+
+Open TV display from Weekly assemblies for a large Unit / cell grid.
+The Display selector also offers Operator goals. Pages rotate every
+20 seconds while the tab is visible. Pause rotation, Next page, and Full
+screen are available. Escape or Exit TV display returns to the board.
+The TV reads this browser's local data; it is not yet a shared plant feed.
 
 YOUR DATA AND YOUR TEAM'S DATA
 

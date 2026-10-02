@@ -96,7 +96,7 @@ Overtime entry is in hours, storage stays in minutes, and the shift budget lives
 
 The prototype runs from local files or a local HTTP server. All runtime assets are bundled locally. It does not load fonts, libraries, analytics, or data from the internet, and does not call SAP, MPP, SharePoint, or any external API.
 
-For the demonstration, the replaceable storage adapter uses the browser's local storage under `quest-board-demo-v4`. It is persistent on that browser/origin when storage is available, but it is neither secure shared enterprise storage nor a tamper-proof audit service. Separate devices do not share data. Same-origin tabs receive updates through storage events. Concurrent writers are last-write-wins in this demo. Local edits from v3 remain in the browser under the old key and are not loaded.
+For the demonstration, the replaceable storage adapter uses the browser's local storage under `quest-board-demo-v6`. It is persistent on that browser/origin when storage is available, but it is neither secure shared enterprise storage nor a tamper-proof audit service. Separate devices do not share data. Same-origin tabs receive updates through storage events. Concurrent writers are last-write-wins in this demo. Local edits from v5 and earlier remain in the browser under their old keys and are not loaded.
 
 The target deployment hypothesis is an ST-approved SharePoint or local-network environment with an approved shared data source. SharePoint/OneDrive, Excel, local files, and an internal service remain candidates, not validated choices. A browser cannot safely be assumed to update a shared Excel workbook just because the file lives on a network share. Write access, authentication, locking, validation, and deployment feasibility require an approved integration design.
 
@@ -124,3 +124,25 @@ No external publication is part of this local demonstration.
 ## Meeting and workbook reconciliation
 
 See `MEETING FOLLOW-UP.md` for the 9/28 feedback, the reviewed workbook ranges, and the open decisions. The app has no automatic quality judgements, rankings by score, or enforced supervisor access; flags are prompts for review.
+
+
+## v6 hours: Operations, the person, and the unit
+
+Operations sets the standard day (8 h, 40 h a week); a person's day is that plus any overtime the lead enters on their assignments, with no approval step → the job form takes the regular hours the named people have left that day, plus additional hours, minus waiting → the goal engine computes the goal from those hours to build → the lead records the stop, the waiting reason, and a comment → Operator day, Insights, unit history, TV, and CSV read the same records.
+
+An assignment's hours worked = regular + additional; hours to build = hours worked − waiting. Waiting counts toward the person's day but not toward building, so goals and colours never hold it against the operator, while the unit and station still show it. Everyone named on an assignment shares its hours. Hours booked for a person = hours worked on their assignments that day plus training-center and other off-unit time, entered by the lead when it happens. Hours left = the person's day − hours booked, across every cell and shift. A shared assignment is limited by whoever has the least time left; the names are not added together.
+
+Two separate views, never combined into one score:
+
+| Question | View | Measure |
+| --- | --- | --- |
+| Did each person's day add up? | Insights → People; Operator day | The day (standard + additional) vs. building, waiting, training, and not booked, across all cells |
+| Was a day with additional hours full of work? | Insights → People → Worked additional hours | Each day over 8 h, with the hours to build and the standard hours earned on that person's assignments |
+| Where does a unit lose time, and why? | Insights → Units; unit history | Time-study hours earned vs. hours to build, plus waiting by reason; each assignment counts once |
+| Which causes matter most? | Insights → Why units wait · 80/20 | Waiting hours by reason, the reasons that reach 80% highlighted |
+
+Station alerts (`stationAlerts` in `dist/production.js`) read the latest assignment of each unit in each cell for the selected day. Alerts follow the process: Blocked is critical; At risk (open shift) is a warning; process efficiency (1 − waiting ÷ total hours) below 90% is a warning and below 75% critical; a run of behind assignments at the same station (2 by default) escalates to critical. Whether the operator met the goal is a person question, shown as the person grade (standard hours completed ÷ (total hours − waiting)) on Supervisor review, Operator day, cards, and Insights, not as a station alert. An acknowledgement is keyed to the assignment and its last update, so a changed record alerts again. The bell, the alerts page, the weekly grid, and both TV layouts read the same list. Rules and acknowledgements are stored with the board state.
+
+Each assignment stores regular minutes (`productiveMinutes`), additional minutes (`overtimeMinutes`), waiting minutes and reason (`delayMinutes`, `delayReason`), and the goal computed from the hours to build. State carries `operations` (standard day, work days) and `offUnit` (person, date, minutes, reason).
+
+Corrections append before/after snapshots. Renaming keeps a stable unit identity across assignments. Removal sets a recoverable deletion marker; active views and hour calculations exclude removed records, while history keeps their events. Restoration checks identity/shift/progress conflicts. These are local safeguards, not an enterprise audit or concurrent-editing system.
