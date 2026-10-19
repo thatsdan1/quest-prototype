@@ -1,4 +1,4 @@
-# QUEST production board — prototype v6
+# QUEST production board — prototype v7
 
 A working local prototype based on the site-visit sketches, the 9/28 client meeting, and a read-only review of ST's production-board workbook. All operators, jobs, step names, timings, and comments are fictional. Source attachments are not bundled.
 
@@ -23,13 +23,27 @@ For team review, start with **START HERE.txt**. It includes Mac/Windows instruct
 
 Double-click **QUEST Prototype.html** for the self-contained version. No internet connection, package installation, or build is needed.
 
-For development, run from this directory:
+For a shared board (lead PCs and floor TVs see the same data, live), run the board server from this directory. It needs Node.js 18 or later and nothing else:
 
 ```sh
-python3 -m http.server 4173 --bind 127.0.0.1 --directory dist
+npm start                      # or: node server/server.js
 ```
 
-Then visit http://127.0.0.1:4173. All fonts, icons, scripts, and styles use local assets or system fonts. The app makes no external network calls.
+Then visit http://127.0.0.1:4173 on this computer. To let other devices on the network connect, start it with `HOST=0.0.0.0 npm start` and open `http://<this computer's address>:4173` on each PC. A floor TV opens straight into the display with `/?display=tv` (add `&layout=cells`, `timeline`, or `goals`); its controls stay hidden until a mouse moves over the bottom of the screen. The board is saved in `data/board.json` (`QUEST_DATA_DIR` changes the folder; `PORT` changes the port). The first screen to connect to a new server seeds it with that browser's board.
+
+All fonts, icons, scripts, and styles use local assets or system fonts. The app and the server make no external network calls.
+
+## New in v7: the 10/15 meeting — floor display, line timeline, shared board
+
+- **Colours, not percentages, for individual results on the floor.** The board cards and the TV show a finished shift's workbook colour (Green, Yellow, Red, Purple) instead of the person grade, hours earned, step gap, or "% of planned work", so no one is singled out by a number. Unit completion and process efficiency still show; they describe the unit and the process. Operator day, Station alerts, Insights, and Supervisor review keep the exact numbers. **Process setup → Floor display → Individual results on the floor** switches numbers back on if ST wants them.
+- **Cells in use: 30 for now, up to 36.** The weekly grid, the TV, the cell filter, and the job form follow **Floor display → Cells in use**. A cell past the count stays visible while it holds a unit.
+- **TV cell grid, rebuilt for a large screen.** Cells sit in rows of six, as on today's display. By default all 30 fit on one 1080p screen with no scrolling; **TV cells per screen** can be 18, 12, or 6 instead (6 matches today's grouping), and **Rotate** sets the page speed (10–60 s). Each tile shows the cell, unit, completion (darker green = further along), the last completed step, and the shift. **Active** cells were worked today, **idle** cells (greyed) hold a unit with no work recorded today, and **open** cells (dashed) are empty. Text scales with the tile, and short tiles drop the step line first. Cells per screen and rotation speed are waiting on the floor lead's input.
+- **Line health on the TV.** One bar shows active, idle, and open cells, average completion, the stations needing attention by name, and how many finished shifts landed in each colour, never one person's numbers.
+- **Line timeline** (Weekly assemblies → **Timeline**, and TV → **Line timeline**): a Gantt-style bar per cell showing where its unit sits in the route by standard hours. Dark is complete before the day, light is what was completed that day, and the purple tick is that day's shift goal, with the last completed step and standard hours left. The gradient grid stays the default view; the timeline is the extra view discussed on 10/15. On the TV, the timeline fits as many rows as the screen holds and pages the rest.
+- **Shared board server** (`server/server.js`). This is the "server with communication between components" from the 10/15 discussion. Served this way, every lead PC and floor TV uses one board: a save on one screen appears on the others within a second, with no reload. Each save carries the board revision it started from. If another screen saved first, the save is refused and that screen loads the newer board with a notice instead of overwriting it. Saves are atomic; the server keeps the previous copy and the first save of each day for two weeks. The status at the top right reads *Saved to the board server*, or *Board server unreachable · retrying* (the device copy stays saved and the save is retried). Opened as a file, the app still works offline on one device, as before.
+- The standalone HTML, the team ZIP, and the server all serve the same `dist/` code. Records saved in v6 load unchanged; the new floor display settings start at the 10/15 defaults.
+
+Demo: on a TV-sized screen, open `/?display=tv`. The grid shows 30 cells, with Cell 04 outlined as blocked and Cell 02 as at risk. Switch **Per screen** to 6 cells to compare with today's grouping, then **Display → Line timeline**. On a second browser window (the lead PC), add a job to an open cell and watch it appear on the TV. In **Process setup → Floor display**, set *Cells in use* to 36: the TV shows 36 tiles without a reload.
 
 ## New in v6: Operations owns the hours; the person and the unit are tracked separately
 
@@ -63,7 +77,7 @@ Availability uses names, dates, the standard day, and the additional hours, wait
 
 ## Suggested demonstration
 
-1. **Weekly assemblies** opens first. Pick a day to see the 36-cell grid, shaded by completed standard hours. Use **Assign job** on an empty cell or **Assign next shift** on a unit.
+1. **Weekly assemblies** opens first. Pick a day to see the grid of cells in use (30 by default), shaded by completed standard hours, or switch to **Timeline**. Use **Assign job** on an empty cell or **Assign next shift** on a unit.
 2. **Daily goals**: each card leads with its cell and shows Start, Goal, and Stop by step name. Finished shifts take the workbook colours: red, yellow, green, and purple.
 3. **Add job**: the form mirrors one workbook block (Name(s), Job #, Hand, Part, Start, Goal, Stop, Comment); cell, date, and shift come from where you clicked. Start on "5 · Peel & prep skin" and the goal is "13 · 3rd debulk". Set **Additional hours worked** to 1 and it becomes "14 · Lay up ply level 6".
 4. Set Stop to "13 · 3rd debulk" and save: the gap is −1 step. Update the job and tick **Assignment finished**: the shift turns **Yellow · 8.0 h**, 8 standard hours against a 9-hour budget.
@@ -79,10 +93,10 @@ Availability uses names, dates, the standard day, and the additional hours, wait
 - Workbook colour bands for finished shifts; training shifts and reported blockers are not coloured.
 - Supervisor review of colours by operator, with review flags and drill-down to job history.
 - Entry form shaped like the workbook block; click a cell to assign; next-shift handoffs with per-job history.
-- Separate weekly assembly grid (36 sample cells, three shifts) and daily operator goals.
+- Separate weekly assembly grid (30 of 36 sample cells in use, three shifts), a line timeline, and daily operator goals.
 - Route editor with spreadsheet paste import and restore; saved revisions keep names and timings for older records.
-- TV display with screen-height-aware pagination.
-- Device-local saved records, shift history, CSV export, and work-cell insights.
+- TV display: cell grid in rows of six (all cells at once or paged), line timeline, and operator goals; line-health bar; colour-only individual results; kiosk link `?display=tv`.
+- A shared board server for lead PCs and floor TVs with live updates and revision checks, or device-local saved records when opened as a file; shift history, CSV export, and work-cell insights.
 - Interactive architecture hypothesis and constraints.
 - Optional browser-agent tools for reading the board or opening a form; they do not save changes.
 
@@ -95,32 +109,38 @@ The supplied workbook was inspected read-only to match its fields, shift order, 
 - Routes, timings, and production data are samples. Completion by standard hours is not labor efficiency or quality acceptance.
 - Purple is shown exactly as the workbook computes it. Whether it means strong output or a quality concern is not decided, and flags are prompts for review.
 - The displayed shift lead is illustrative; there is no application authentication or role enforcement, including on Supervisor review.
-- Browser storage is local to the device, browser, and origin. It is not shared, enterprise-approved storage. File-based storage behavior varies by browser; the local HTTP version is recommended for repeatable demos.
-- TV mode is a presentation mode, not a permission boundary. Another device will not receive updates without a shared backend.
+- Opened as a file, the board is stored in that browser only. Copies of the HTML opened from a shared folder do **not** share data, so a floor TV would never see a lead's entries; that is what the board server is for.
+- The board server is a prototype: one JSON file, whole-board saves with a revision check, no login, no record-level merge. A save made on a stale board is refused, not merged, and that screen's last change has to be re-entered. Authentication, the approved host, retention, and backups beyond the built-in copies are for ST IT.
+- TV mode is a presentation mode, not a permission boundary. Any screen that can open the board can edit it.
 - Old records keep their route revision. Changing or importing a route affects new assignments. The saved process is locked to preserve its route. Job number, operator, cell, date, and shift can be corrected; before/after snapshots remain. Renaming a job updates its linked assignments while keeping a stable unit ID. Overlapping recorded progress is rejected. A handoff keeps the unit's route and takes the current default shift budget.
 - If no jobs exist today, the demo initially opens the latest date with saved assignments; the date control shows the actual selected date.
 - SAP, ERP, MPP, SharePoint, Excel ingestion, and approved internal hosting are not connected. There are no public-internet runtime dependencies.
 - TAC rules, transition routes, parallel work, rework, operator comparisons, and final unit acceptance require stakeholder validation.
 - Station alerts fire on lead-reported status and finished shifts. Alerting on pace during a shift would need shift clock times and stops updated during the shift. Alerts are on-screen only: no sound, email, or phone notification.
 - Hours are lead-entered, not badge or clock data. Everyone named on a job shares its hours; there is no per-person split. A trainer's floor time is entered as training, not as a second name on the job.
-- History is a local prototype activity log, not a tamper-proof audit trail. Same-origin tabs use storage events; concurrent writers have no conflict resolution.
+- History is a prototype activity log, not a tamper-proof audit trail.
 
 ## Source and verification
 
 - `dist/index.html` — accessible shell, navigation, and dialogs.
 - `dist/styles.css` — supervisor, TV, weekly, review, architecture, and responsive layouts.
 - `dist/app.js` — UI, sample routes and seed data, process configuration, and workflow coordination.
-- `dist/workflow.js` — hours section of the job form, Operator day with the standard day and training time, person/unit insights, corrections, recoverable removal, and TV cell layout.
+- `dist/workflow.js` — hours section of the job form, Operator day with the standard day and training time, person/unit insights, corrections, recoverable removal, floor display settings, the TV cell grid and line health, and the line timeline.
 - `dist/tracking.js` — pure worker-time accounting: hours to build (worked − waiting), each person's day (standard + additional), training / off-unit time, person-days for additional-hour checks, availability, unit flow against the time study, and the waiting Pareto.
-- `dist/engine.js` — pure goal rules, hours earned, colour bands, and completion.
-- `dist/production.js` — station alert rules, assignment identity, shift order, handoff drafts, overtime conversion, assembly rollups, route paste parsing, and operator summaries.
+- `dist/engine.js` — pure goal rules, hours earned, colour bands, completion, and timeline positions.
+- `dist/production.js` — floor display settings, cells in use, TV screens, station alert rules, assignment identity, shift order, handoff drafts, overtime conversion, assembly rollups, route paste parsing, and operator summaries.
 - `dist/storage.js` — replaceable local-storage adapter, history snapshots, and CSV cell encoding.
+- `dist/sync.js` — shared-board client: loads from and saves to the board server with a revision check, follows live updates, and retries when the server is unreachable.
+- `server/server.js` — the board server: serves `dist/`, one shared board with atomic saves and backups, live update stream; no dependencies, no internet.
+- `package.json` — `npm start` (board server), `npm test`, `npm run build` (standalone HTML + team ZIP). No packages to install.
 - `ARCHITECTURE.md` — flow diagram, formulas, colour bands, boundaries, constraints, and open decisions.
-- `MEETING FOLLOW-UP.md` — 9/28 feedback, workbook findings, and pending decisions.
+- `MEETING FOLLOW-UP.md` — 9/28, 10/1, and 10/15 feedback, workbook findings, IT meeting and Phase 2 input, and pending decisions.
+- `tests/floor.test.cjs` — floor display settings, cells in use, TV screens, and the timeline positions.
+- `tests/server.test.cjs` — the board server (saves, stale-save refusal, bad input, restart and backups, file serving, live events) and two screens sharing a board through `dist/sync.js`.
 - `tests/engine.test.cjs` — goal rules, workbook colour boundaries, overtime, completion, handoffs, route parsing, operator summaries, snapshots, CSV, storage failures, additional hours, waiting, training time, unit flow, and the Pareto.
 - `scripts/bundle.cjs` — regenerates the self-contained HTML deliverable and fails if an asset tag is missing.
 - `scripts/package.py` — builds and verifies the team ZIP.
 
-Run the tests with `node --test tests/engine.test.cjs`. Regenerate the offline deliverable after changes with `node scripts/bundle.cjs`, then `python3 scripts/package.py` for the team ZIP.
+Run the tests with `npm test` (or `node --test`). Regenerate the offline deliverable after changes with `npm run build` (`node scripts/bundle.cjs`, then `python3 scripts/package.py` for the team ZIP).
 
 For the next iteration, confirm the meaning of purple, the goal rule and Start convention, the approved routes, the cell roster and shift boundaries, ST's hosting/storage direction, and, with ST stakeholders and Operations, how two-person and trainer assignments are planned.

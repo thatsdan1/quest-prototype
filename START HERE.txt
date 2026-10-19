@@ -27,7 +27,7 @@ email preview or the ZIP viewer. You can also send just the standalone
 WHAT TO TRY — A FIVE-MINUTE WALKTHROUGH
 
 1. Weekly assemblies (the opening view)
-   Click a day to review the 36 demo cells. Darker green means more of a
+   Click a day to review the 30 cells in use. Darker green means more of a
    unit's standard hours are complete. Each unit has "Assign next shift";
    each cell has "Assign job". Days after today show as Upcoming.
 
@@ -142,11 +142,18 @@ reveal earlier recorded progress. Reset demo is a separate destructive action.
 
 TV DISPLAY
 
-Open TV display from Weekly assemblies for a large Unit / cell grid.
-The Display selector also offers Operator goals. Pages rotate every
-20 seconds while the tab is visible. Pause rotation, Next page, and Full
-screen are available. Escape or Exit TV display returns to the board.
-The TV reads this browser's local data; it is not yet a shared plant feed.
+Open TV display from Weekly assemblies for the cell grid: every cell in
+use on one screen, in rows of six. Active cells are shaded by completion,
+idle cells (a unit, but no work recorded today) are greyed, and open cells
+are dashed. The bar on top shows line health and any station alerts.
+Display also offers Line timeline (where each unit sits in its route) and
+Operator goals. Individual results show as colours, not numbers.
+Per screen (all, 18, 12, or 6 cells) and Rotate (10-60 seconds) change
+the layout for every TV; so does Process setup -> Floor display, which
+also sets how many cells are in use (30 now, up to 36). Escape or Exit TV
+display returns to the board.
+Opened as a file, the TV shows only this browser's data. For a TV that
+follows the leads' entries live, use the board server below.
 
 YOUR DATA AND YOUR TEAM'S DATA
 
@@ -164,6 +171,28 @@ YOUR DATA AND YOUR TEAM'S DATA
 - All production data, step names, and timings are fictional. A route pasted
   into Process setup stays in your browser. SAP, MPP, SharePoint, and
   other ST systems are not connected. The architecture is a hypothesis.
+
+OPTIONAL — SHARED BOARD SERVER FOR TVs AND LEAD PCs
+
+The board server lets every screen share one board: a lead saves on a PC
+and the floor TV updates within a second. It needs Node.js 18 or later
+(nodejs.org); nothing else is installed.
+
+  In a terminal in the project folder (see below for how to open one):
+
+  npm start
+
+  Then open http://127.0.0.1:4173 on this computer.
+
+  To share with other devices on the network:
+    Mac / Linux:  HOST=0.0.0.0 npm start
+    Windows:      set "HOST=0.0.0.0" && npm start
+  Open http://<this computer's address>:4173 on each lead PC, and
+  http://<this computer's address>:4173/?display=tv on each TV.
+  The board is saved in the "data" folder next to the app.
+
+The first screen that connects to a new server seeds it with its own
+board. Reset demo data on any screen resets the board for every screen.
 
 OPTIONAL — RUN THROUGH A LOCAL SERVER
 

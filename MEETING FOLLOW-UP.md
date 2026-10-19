@@ -1,4 +1,4 @@
-# 9/28 meeting follow-up — prototype v4
+# Meeting follow-up — prototype v4 to v7
 
 Scope: A320 lofting, Step 1 — hand layup. The demo remains offline with fictional jobs, people, step names, and timings.
 
@@ -110,3 +110,42 @@ To confirm with the supervisor: whether "behind" should also mean behind pace du
 | Process grade = 1 − waiting ÷ total time; 3 h waiting is about 72% | Shown as *Process* on the same views and on Insights → Units for whole units |
 | Alerts should be about the process; the person can be a separate tab | Station alerts fire on Blocked, At risk, and process efficiency below 90% (warning) or 75% (critical); the person grade is shown in the alert for context only. Supervisor review is the per-person tab |
 
+## 10/15 meeting → v7
+
+| 10/15 discussion | Prototype v7 |
+| --- | --- |
+| Show exact percentages for each operator, or colour categories? Decided: colour, so no individual is embarrassed by a number; the competition should motivate, not shame | **Floor display → Individual results on the floor: Colour only** (default). Board cards and the TV show the finished shift's workbook colour, with no person grade, hours earned against hours to build, step gap, or "% of planned work". Unit completion and process efficiency stay; they describe the unit and the process. Operator day, Station alerts, Insights, and Supervisor review keep exact numbers. One setting turns numbers back on |
+| Individual goal completion **and** overall production-line health | TV line-health bar: active / idle / open cells, average completion, stations needing attention by name, and the count of finished shifts in each colour, without names |
+| A timeline or progress bar showing where each station is in the assembly process, like a Gantt chart; an extra view next to the colour-gradient chart, nice to have | **Weekly assemblies → Timeline** and **TV → Line timeline**: one bar per cell over its route by standard hours. Dark = complete before the day, light = completed that day, purple tick = that day's shift goal, plus the last step and standard hours left. The gradient grid stays the default |
+| TV today: 36 cells in groups of six, long cycle. Preference: more cells at once, active and inactive cells with colour and information; 30 cells now, all 36 later | Rows of six; **all cells in use on one screen** by default (30 fit a 1080p TV with no scrolling), or 18 / 12 / 6 per screen; rotation 10–60 s. **Cells in use** defaults to 30, up to 36. Active (worked today), idle (unit in the cell, nothing recorded today; greyed), and open (empty; dashed) cells are distinct. Text scales with the tile |
+| After the project, ST IT places the HTML in a shared folder for TVs and shop-floor PCs. Our plan: a server with communication between components, all files in a private GitHub repository, handed to ST for security rules | **`server/server.js`**: Node 18+, no dependencies, no internet access. It serves the app and one shared board. Lead PCs save; TVs update live. Stale saves are refused rather than overwriting, and saves are atomic with a previous copy and two weeks of daily backups. A TV opens with `/?display=tv`. The standalone HTML still runs offline on one device |
+| Connect to SAP through API keys so data fills in automatically, with no double entry from Excel | Not built; Phase 2 (below). The server is where an SAP connector and its keys would live, never the browser |
+| ST IT helps implement; ST's own team owns maintenance, with contractors for major changes | Plain HTML/CSS/JS with no build step or packages; `npm test` runs 50 tests; the README lists every file's job |
+| Prototype for about a year, then Solumina for digitized paperwork and clock-in/out | Phase 2 (below). CSV export and the JSON board file give a migration path |
+
+### Why a shared folder alone won't feed the TV
+
+Opened as a file, the app saves to that browser's storage. If ST IT copies the HTML into a shared folder and each TV and PC opens it there, every screen keeps its own separate data: a lead's entries on one PC never reach a TV. The TV needs a shared data source. That can be the board server in this repository, or another source that ST IT approves.
+
+### Input for the ST IT meeting
+
+- **What runs:** one Node.js 18+ process (`npm start`), no packages, no outbound connections. It serves static files and three endpoints: `GET/PUT /api/state`, `GET /api/events` (live updates), and `GET /api/health`. The response headers block loading anything from outside the server.
+- **Where:** any Windows or Linux machine, VM, or container on the plant network. Settings: `HOST` (default 127.0.0.1, this machine only; `0.0.0.0` for the network), `PORT` (4173), `QUEST_DATA_DIR` (board file and backups).
+- **Data:** one JSON board file, a previous copy, and 14 daily backups, all in the data folder. No proprietary data is in the repository; real routes are pasted in on site.
+- **For IT to decide:** who may edit and who may only view (there is no login today; options include network rules, a reverse proxy with Windows sign-in, and view-only TV accounts); TLS; GCC High / ITAR / FedRAMP applicability; backup and retention; moving the repository from the private GitHub repo into ST's source control; who restarts the service.
+
+### Phase 2: technical input for the recommendations document
+
+1. **SAP connector, read-only first.** A scheduled server-side job pulls production orders and routing standard times through SAP's API (OData or BAPI, IT's choice), so leads stop retyping job numbers and routes from Excel. API keys stay in server settings. Writing confirmations back to SAP would come later, if ever.
+2. **Record-level storage.** Replace the single board file with a database that IT supports (SQL Server or PostgreSQL), saving one record at a time with an append-only audit log. Two leads could then edit different cells at once without a whole-board conflict.
+3. **Sign-in.** Single sign-on (for example Entra ID) for leads and supervisors, with view-only floor TVs, and the exact-number pages limited to supervisors.
+4. **Clock data, then pace alerts.** With real clock-in/out times, mid-shift pace alerts and measured idle time between units become possible. Today both would be guesses.
+5. **Solumina, after about a year.** Map unit / job, operations and steps, standard times, and clock events to Solumina's model, and migrate the history through the CSV export or the board file. Solumina's digitized paperwork and clock tracking would replace lead-entered hours. The board could remain the floor display, reading from Solumina.
+
+### Still open after 10/15
+
+- TV layout: cells per screen and rotation speed, pending the floor lead's input (the settings are ready for either answer).
+- Whether supervisors also see colour only, or keep exact numbers (v7: they keep numbers).
+- Hosting and ownership of the board server, for the ST IT meeting next week.
+- The prototype review with ST leadership next week (tentatively 9:00–9:50).
+- End-of-October site visit: proposal to test the board server on the floor with one TV and one lead PC. A second ST tester may join the prototype testing.

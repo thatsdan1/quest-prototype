@@ -6,13 +6,14 @@
   <meta name="description" content="QUEST capstone prototype for a bonding production board. Fictional demonstration data.">
   <title>Production board · QUEST</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%23132c30'/%3E%3Ccircle cx='19' cy='18' r='9' fill='none' stroke='%23baf178' stroke-width='5'/%3E%3Cpath d='m23 24 7 7' stroke='%23baf178' stroke-width='5'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css?v=8">
-  <script src="engine.js?v=8" defer></script>
-  <script src="storage.js?v=8" defer></script>
-  <script src="production.js?v=8" defer></script>
-  <script src="tracking.js?v=8" defer></script>
-  <script src="workflow.js?v=8" defer></script>
-  <script src="app.js?v=8" defer></script>
+  <link rel="stylesheet" href="styles.css?v=9">
+  <script src="engine.js?v=9" defer></script>
+  <script src="storage.js?v=9" defer></script>
+  <script src="production.js?v=9" defer></script>
+  <script src="tracking.js?v=9" defer></script>
+  <script src="workflow.js?v=9" defer></script>
+  <script src="sync.js?v=9" defer></script>
+  <script src="app.js?v=9" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to board</a>
@@ -31,7 +32,7 @@
       <button class="nav-item" data-page="process"><span data-icon="settings"></span>Process setup</button>
       <button class="nav-item" data-page="architecture"><span data-icon="layers"></span>Architecture</button>
     </nav>
-    <div class="sidebar-bottom"><div class="prototype-note"><span class="mini-label">QUEST CAPSTONE</span><strong>Built for the floor.</strong><p>Prototype v6<br>Fictional demonstration data</p></div><button class="reset-button" id="reset-demo"><span data-icon="reset"></span>Reset demo data</button><div class="profile"><span class="avatar">SL</span><div>Shift lead<small>Demo workspace</small></div><span class="profile-dot"></span></div></div>
+    <div class="sidebar-bottom"><div class="prototype-note"><span class="mini-label">QUEST CAPSTONE</span><strong>Built for the floor.</strong><p>Prototype v7<br>Fictional demonstration data</p></div><button class="reset-button" id="reset-demo"><span data-icon="reset"></span>Reset demo data</button><div class="profile"><span class="avatar">SL</span><div>Shift lead<small>Demo workspace</small></div><span class="profile-dot"></span></div></div>
   </aside>
   <div class="app-shell">
     <header class="topbar"><div class="breadcrumb">A320 program <span>/</span> Lofting <span>/</span> <strong id="breadcrumb-page">Production board</strong></div><div class="topbar-right"><button class="alert-bell" id="alert-bell" data-page="alerts" aria-label="Station alerts"><span data-icon="alert"></span><b id="alert-count"></b></button><span class="demo-badge">DEMO</span><span class="save-status" id="save-status">Saved on this device</span><span class="top-avatar">SL</span></div></header>

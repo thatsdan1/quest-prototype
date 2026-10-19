@@ -5,6 +5,15 @@ const cells=Array.from({length:36},(_,i)=>`Cell ${String(i+1).padStart(2,'0')}`)
 // Workbook columns run third, first, second within each production day.
 const shifts=['3','1','2'];
 const bands=['purple','green','yellow','red'];
+// Floor display, agreed with ST on 10/15: the line runs 30 of the 36 cells for now; the TV shows them in rows of six, all at once or a few rows a screen.
+// Individual results show as colours on the floor; exact numbers stay on the lead and supervisor pages unless floorNumbers is switched on.
+const DEFAULT_DISPLAY=Object.freeze({cellCount:30,perScreen:'all',rotateSeconds:20,floorNumbers:false});
+const PER_SCREEN=['all','18','12','6'],ROTATE_SECONDS=[10,15,20,30,45,60];
+function displaySettings(raw){const d={...DEFAULT_DISPLAY,...raw},count=Math.round(Number(d.cellCount));return {cellCount:Number.isFinite(count)?Math.max(1,Math.min(cells.length,count)):DEFAULT_DISPLAY.cellCount,perScreen:PER_SCREEN.includes(String(d.perScreen))?String(d.perScreen):DEFAULT_DISPLAY.perScreen,rotateSeconds:ROTATE_SECONDS.includes(Number(d.rotateSeconds))?Number(d.rotateSeconds):DEFAULT_DISPLAY.rotateSeconds,floorNumbers:d.floorNumbers===true};}
+// The cells in use, plus any later cell that still holds a unit, so a record never drops off the board.
+function cellsInUse(count,occupied=[]){return cells.filter((c,i)=>i<count||occupied.includes(c));}
+// TV screens: 'all' is one screen; otherwise pages of that many items.
+function screens(items,perScreen){const size=perScreen==='all'?Math.max(1,items.length):Number(perScreen),pages=[];for(let i=0;i<items.length;i+=size)pages.push(items.slice(i,i+size));return pages.length?pages:[[]];}
 const unitKey=j=>j.unitId||JSON.stringify([j.processId,j.job.trim().toLowerCase()]);
 function changeRemoved(records,ids,removedAt,batchId){return records.map(j=>ids.includes(j.id)?{...j,deletedAt:removedAt,deleteBatch:removedAt?batchId:null}:j);}
 const compare=(a,b)=>a.date.localeCompare(b.date)||shifts.indexOf(a.shift)-shifts.indexOf(b.shift)||(a.updatedAt||'').localeCompare(b.updatedAt||'');
@@ -32,5 +41,5 @@ function stationAlerts(records,{date,efficiency,warnBelow=0.9,criticalBelow=0.75
 }
 // Per-operator counts of rated shifts. A shared shift counts once for each named operator.
 function operatorSummary(rows){const people=new Map();for(const row of rows){if(!bands.includes(row.rating))continue;for(const raw of String(row.operators||'').split(/\s*(?:,|;|&|\/|\band\b)\s*/i)){const name=raw.trim().replace(/\s+/g,' ');if(!name)continue;const key=name.toLowerCase(),p=people.get(key)||{name,shifts:0,purple:0,green:0,yellow:0,red:0,earnedMinutes:0,budgetMinutes:0};p.shifts++;p[row.rating]++;p.earnedMinutes+=row.earnedMinutes||0;p.budgetMinutes+=row.budgetMinutes||0;people.set(key,p);}}return [...people.values()];}
-return {cells,shifts,bands,unitKey,compare,latestUnits,overtimeMinutes,nextShift,parseRoute,operatorSummary,changeRemoved,stationAlerts};
+return {cells,shifts,bands,DEFAULT_DISPLAY,PER_SCREEN,ROTATE_SECONDS,displaySettings,cellsInUse,screens,unitKey,compare,latestUnits,overtimeMinutes,nextShift,parseRoute,operatorSummary,changeRemoved,stationAlerts};
 });

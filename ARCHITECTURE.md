@@ -11,19 +11,22 @@ flowchart TB
       Engine[Goal engine\nGoal step, gap, hours earned, colour]
       Adapter[Data access layer]
       Store[(Production records + shift history\nApproved repository to be selected)]
-      Board[Master production board\n36-cell week grid and daily goals]
-      TV[Operator / TV display\nOperational awareness]
+      Board[Master production board\nCells in use: 30 of 36 · grid, timeline, daily goals]
+      TV[Floor TV\nCell grid · line timeline · colour-only results]
+      Server[Board server\nOne shared board · live updates · revision check]
       Analytics[Supervisor review, history, trends\nReview and analysis]
       Input --> Engine
       Config --> Engine
       Engine --> Adapter
-      Adapter <--> Store
+      Adapter <--> Server
+      Server <--> Store
       Adapter --> Board
+      Server -. live updates .-> TV
       Board --> TV
       Adapter --> Analytics
     end
     Lead --> Input
-    ERP[SAP / ERP / future MPP\nOutside MVP — no direct integration]
+    ERP[SAP / ERP / future MPP or Solumina\nPhase 2 — server-side connector, not in the MVP]
     Internet[Public internet\nNo application runtime dependency]
 ```
 
@@ -33,8 +36,8 @@ flowchart TB
 | --- | --- | --- |
 | Data input | Board-shaped form: Name(s), Job #, Hand, Part, Start, Goal (calculated), Stop, Comment. Start and stop are chosen by step name; cell, date, and shift come from the clicked cell; overtime is in hours; duplicate assignments are rejected | The client's simplified intake design, approved names, cell roster, shift conventions, and permitted operator visibility |
 | Goal engine | `dist/engine.js`, a pure module: nearest-step and whole-step goal rules, hours earned, colour bands, and completion by standard hours | Approved routes and standards, TAC definition, meaning of purple, breaks, partial work, parallel operations, rework, and final acceptance |
-| Production board | HTML/CSS/JS: 36-cell weekly grid with click-to-assign, daily goal cards, paged TV table, and supervisor review | TV resolution and distance, secure floor device, real role permissions |
-| History / analytics | `dist/storage.js` device-local adapter; history snapshots with step names, hours, and colour; route revisions; CSV | Shared storage, identity, concurrency, append-only audit controls, backups, retention, and network deployment |
+| Production board | HTML/CSS/JS: weekly grid of the cells in use (30 of 36) with click-to-assign, line timeline, daily goal cards, TV cell grid / timeline / goals table, and supervisor review | TV resolution and distance, cells per screen and rotation (floor lead), secure floor device, real role permissions |
+| History / analytics | `server/server.js` + `dist/sync.js` shared board with live updates, or `dist/storage.js` device-local adapter when opened as a file; history snapshots with step names, hours, and colour; route revisions; CSV | Shared storage, identity, concurrency, append-only audit controls, backups, retention, and network deployment |
 
 The interactive **Architecture** page mirrors these modules and makes implemented behavior distinguishable from proposed infrastructure.
 
@@ -88,17 +91,17 @@ Each assignment keeps its step timings and route revision. Every saved process r
 
 Every date/shift assignment has its own ID and operator record. Next shift creates a new assignment linked by previousAssignmentId, prefilled from the prior stop. Prior assignments are retained. Production-day order provisionally follows the workbook: 3 → 1 → 2, then the next date. Earlier corrections do not automatically rewrite downstream assignments.
 
-The weekly assembly view selects the latest assignment per process/job through the chosen day, before grouping by cell. Multiple shifts do not inflate assembly totals. A unit stays in its last-recorded cell until a later assignment moves it, and leaves the grid after the day it reaches its final step; this is not verified live occupancy. Days after today show as upcoming. Cell 01–36 are placeholders. A job number is provisionally one unit within a process.
+The weekly assembly view selects the latest assignment per process/job through the chosen day, before grouping by cell. Multiple shifts do not inflate assembly totals. A unit stays in its last-recorded cell until a later assignment moves it, and leaves the grid after the day it reaches its final step; this is not verified live occupancy. Days after today show as upcoming. Cell 01–36 are placeholders; Floor display sets how many are in use (30 by default), and a later cell stays visible while it holds a unit. A job number is provisionally one unit within a process.
 
 Overtime entry is in hours, storage stays in minutes, and the shift budget lives in process configuration. A handoff keeps the unit's route revision and takes the current default shift budget.
 
 ## Storage and deployment boundary
 
-The prototype runs from local files or a local HTTP server. All runtime assets are bundled locally. It does not load fonts, libraries, analytics, or data from the internet, and does not call SAP, MPP, SharePoint, or any external API.
+The prototype runs from a local file, a static HTTP server, or the board server in `server/`. All runtime assets are bundled locally. It does not load fonts, libraries, analytics, or data from the internet, and does not call SAP, MPP, SharePoint, or any external API.
 
-For the demonstration, the replaceable storage adapter uses the browser's local storage under `quest-board-demo-v6`. It is persistent on that browser/origin when storage is available, but it is neither secure shared enterprise storage nor a tamper-proof audit service. Separate devices do not share data. Same-origin tabs receive updates through storage events. Concurrent writers are last-write-wins in this demo. Local edits from v5 and earlier remain in the browser under their old keys and are not loaded.
+Opened as a file or from a static server, the replaceable storage adapter uses the browser's local storage under `quest-board-demo-v6`. It is persistent on that browser/origin when storage is available, but it is neither secure shared enterprise storage nor a tamper-proof audit service. Separate devices do not share data. Same-origin tabs receive updates through storage events. Concurrent writers are last-write-wins in this demo. Local edits from v5 and earlier remain in the browser under their old keys and are not loaded.
 
-The target deployment hypothesis is an ST-approved SharePoint or local-network environment with an approved shared data source. SharePoint/OneDrive, Excel, local files, and an internal service remain candidates, not validated choices. A browser cannot safely be assumed to update a shared Excel workbook just because the file lives on a network share. Write access, authentication, locking, validation, and deployment feasibility require an approved integration design.
+Served by the board server, every screen uses one board; see *v7: shared board server* below. The target deployment hypothesis is an ST-approved SharePoint or local-network environment with an approved shared data source. SharePoint/OneDrive, Excel, local files, and an internal service remain candidates, not validated choices. A browser cannot safely be assumed to update a shared Excel workbook just because the file lives on a network share. Write access, authentication, locking, validation, and deployment feasibility require an approved integration design.
 
 No external publication is part of this local demonstration.
 
@@ -146,3 +149,31 @@ Station alerts (`stationAlerts` in `dist/production.js`) read the latest assignm
 Each assignment stores regular minutes (`productiveMinutes`), additional minutes (`overtimeMinutes`), waiting minutes and reason (`delayMinutes`, `delayReason`), and the goal computed from the hours to build. State carries `operations` (standard day, work days) and `offUnit` (person, date, minutes, reason).
 
 Corrections append before/after snapshots. Renaming keeps a stable unit identity across assignments. Removal sets a recoverable deletion marker; active views and hour calculations exclude removed records, while history keeps their events. Restoration checks identity/shift/progress conflicts. These are local safeguards, not an enterprise audit or concurrent-editing system.
+
+## v7: floor display and line timeline (10/15)
+
+`state.display` holds the floor display settings that every screen shares: `cellCount` (cells in use, 30 by default, 1–36), `perScreen` (`all`, 18, 12, or 6 TV cells per screen), `rotateSeconds` (10–60), and `floorNumbers` (false = colour only). `QuestProduction.displaySettings` validates them, and `cellsInUse` returns the cells in use plus any later cell that still holds a unit.
+
+With `floorNumbers` off, the board cards and the TV operator-goals table show the finished shift's colour (`ratingOf`) without the person grade, hours earned, gap, or attainment. The lead and supervisor pages are unchanged. This is a display rule, not access control.
+
+The TV cell grid lists each cell in use, in rows of six. A cell is *active* when its latest unit record is on the selected day, *idle* when it holds a unit last worked on an earlier day, and *open* when it holds none. With `perScreen = all`, the grid is sized to the space left on the screen, and each tile's text is sized from the tile's own height (CSS container queries), so 6 or 36 tiles both read from a distance; short tiles drop the step line first.
+
+The line timeline uses `QuestEngine.timeline`: positions are shares of the unit's own route by standard minutes. `dayStart` is the earliest start among that unit's assignments on the selected day, `stop` the last completed step (short of 100% until the final step, like completion), and `goal` the latest assignment's goal when it is on that day. The axis is the share of the route, labelled with the selected process's total standard hours.
+
+## v7: shared board server
+
+`server/server.js` (Node 18+, built-in modules only) serves `dist/` and holds one board:
+
+| Endpoint | Purpose |
+| --- | --- |
+| `GET /api/state` | `{server, revision, savedAt, data}`; `data` is null on a new server |
+| `PUT /api/state` | `{baseRevision, data}` → 200 `{revision}`; 409 with the current board when `baseRevision` is stale; 400/413/415 for bad input |
+| `GET /api/events` | Server-sent events: `revision` on connect and after every save |
+| `GET /api/health` | Revision, last save, connected screens |
+
+`dist/sync.js` is the client. On load, the app renders from device storage as before, then asks the server for the board. If the server has none, this screen seeds it; otherwise the screen adopts the server's board. `saveState()` still writes device storage, then sends the whole board with its base revision. Saves made while one is in flight are coalesced, so only the newest is sent. A refused (409) save makes the screen adopt the newer board and tell the user to re-enter the last change. A network failure keeps the newest board and retries every 5 s. Live events trigger a reload of the board when the revision moves.
+
+Each save is written to `board.json.tmp` and renamed over `board.json` after the previous file is copied to `board.json.bak`. The first save of each day is also kept in `backups/` (14 days). A damaged `board.json` falls back to the `.bak` at start-up. Response headers set a content security policy that allows only the server's own scripts, styles, and connections.
+
+Not in the prototype: authentication, record-level merge, an audit log separate from the board, TLS, and any SAP or Solumina connection. Those are for ST IT and Phase 2; see `MEETING FOLLOW-UP.md`.
+

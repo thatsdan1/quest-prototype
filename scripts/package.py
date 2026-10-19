@@ -5,9 +5,9 @@ from zipfile import ZipFile, ZIP_DEFLATED
 root = Path(__file__).resolve().parent.parent
 files = [root / name for name in (
     "QUEST Prototype.html", "START HERE.txt", "README.md",
-    "ARCHITECTURE.md", "MEETING FOLLOW-UP.md",
+    "ARCHITECTURE.md", "MEETING FOLLOW-UP.md", "package.json",
 )]
-for folder in ("dist", "scripts", "tests"):
+for folder in ("dist", "scripts", "server", "tests"):
     files.extend(p for p in (root / folder).rglob("*")
                  if p.is_file() and not any(part.startswith(".") or part == "__pycache__"
                                            for part in p.relative_to(root).parts))

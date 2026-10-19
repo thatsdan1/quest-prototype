@@ -15,3 +15,6 @@ __pycache__/
 
 # Generated team archive; use GitHub's Download ZIP or the standalone HTML
 QUEST Prototype.zip
+
+# Shared board data written by server/server.js
+data/

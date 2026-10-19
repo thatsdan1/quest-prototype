@@ -1,0 +1,14 @@
+{
+  "name": "quest-board",
+  "version": "0.7.0",
+  "private": true,
+  "description": "QUEST capstone production-board prototype. Fictional demonstration data.",
+  "scripts": {
+    "start": "node server/server.js",
+    "test": "node --test",
+    "build": "node scripts/bundle.cjs && python3 scripts/package.py"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
