@@ -64,7 +64,7 @@ ST's October 1 answer: leads may enter hours for now, but hours per unit come fr
 - Process setup labels the route as time-study standards.
 - Saved data moved to a new browser key (`quest-board-demo-v6`) so everyone starts from the new sample data. v5 edits stay in the browser under the old key.
 
-Demo: click the bell. Today, Cell 04 is blocked (critical) and Cell 02 is at risk. Go back a day: Cell 05 waited 1.5 h on tooling (process 81%), critical because it keeps happening at that station. Acknowledge it, then open TV display: the banner lists the remaining stations. Next, open Operator day for yesterday. Harper Moss, a trainer, has 8 h of training on the floor; the training cells' goals are not doubled. Jordan Lee spent 2 h in the training center, shown in blue. On the board, Add job: set **Additional hours worked** to 4 (the goal covers 12 h), then **Hours waiting** 2.5 for *Tooling / fixture*: the goal line reads *8.0 h regular + 4.0 h additional − 2.5 h waiting = 9.5 h to build*. Stop at the goal, finish, and save: the shift is green, and the save message says the station waited. In Insights, choose **Show → Worked additional hours** to see Morgan Blake's 12 h day on Sep 29 next to the standard hours earned.
+Demo: click the bell. Today, Cell 04 is blocked (critical) and Cell 02 is at risk. Go back a day: Cell 05 waited 1.5 h on tooling (process 81%), critical because it keeps happening at that station. Acknowledge it, then open TV display: the banner lists the remaining stations. Next, open Operator day for yesterday. Harper Moss, a trainer, has 8 h of training on the floor; the training cells' goals are not doubled. Jordan Lee spent 2 h in the training center, shown in blue. On the board, New job: set **Additional hours worked** to 4 (the goal covers 12 h), then **Hours waiting** 2.5 for *Tooling / fixture*: the goal line reads *8.0 h regular + 4.0 h additional − 2.5 h waiting = 9.5 h to build*. Stop at the goal, finish, and save: the shift is green, and the save message says the station waited. In Insights, choose **Show → Worked additional hours** to see Morgan Blake's 12 h day on Sep 29 next to the standard hours earned.
 
 ## Carried over from v5
 
@@ -75,13 +75,22 @@ Demo: click the bell. Today, Cell 04 is blocked (critical) and Cell 02 is at ris
 
 Availability uses names, dates, the standard day, and the additional hours, waiting, and training time the lead entered. It does not use clock time or Kronos badge data. There is one assignment per unit/date/shift; revisiting a unit within the same shift means editing that record. Partial-shift plans are excluded from workbook colour comparisons until rating rules are agreed. Unit completion is not worker efficiency or quality acceptance.
 
+## Which button
+
+| Button | Use it when | What the form starts with |
+|---|---|---|
+| **New job** (top, or on a cell) | A unit isn't on the board yet | Blank. The cell button fills in the cell and date |
+| **Continue next shift** (on a unit) | The same unit goes to the next shift | Same job; Start = where the last shift stopped |
+| **Next unit this shift** (on a unit) | The same people finished a unit and start another today | Same people, cell, and shift; hours left today |
+| **Edit** (or click the unit) | A saved shift needs progress or a correction | That shift's saved values |
+
 ## Suggested demonstration
 
-1. **Weekly assemblies** opens first. Pick a day to see the grid of cells in use (30 by default), shaded by completed standard hours, or switch to **Timeline**. Use **Assign job** on an empty cell or **Assign next shift** on a unit.
+1. **Weekly assemblies** opens first. Pick a day to see the grid of cells in use (30 by default), shaded by completed standard hours, or switch to **Timeline**. Use **New job** on a cell or **Continue next shift** on a unit.
 2. **Daily goals**: each card leads with its cell and shows Start, Goal, and Stop by step name. Finished shifts take the workbook colours: red, yellow, green, and purple.
-3. **Add job**: the form mirrors one workbook block (Name(s), Job #, Hand, Part, Start, Goal, Stop, Comment); cell, date, and shift come from where you clicked. Start on "5 · Peel & prep skin" and the goal is "13 · 3rd debulk". Set **Additional hours worked** to 1 and it becomes "14 · Lay up ply level 6".
+3. **New job**: the form mirrors one workbook block (Name(s), Job #, Hand, Part, Start, Goal, Stop, Comment); cell, date, and shift come from where you clicked. Start on "5 · Peel & prep skin" and the goal is "13 · 3rd debulk". Set **Additional hours worked** to 1 and it becomes "14 · Lay up ply level 6".
 4. Set Stop to "13 · 3rd debulk" and save: the gap is −1 step. Update the job and tick **Assignment finished**: the shift turns **Yellow · 8.0 h**, 8 standard hours against a 9-hour budget.
-5. **Next shift** on the same card carries Start forward as "14 · Lay up ply level 6". **History** shows both operators.
+5. **Continue next shift** on the same card carries Start forward as "14 · Lay up ply level 6". **History** shows both operators.
 6. **Supervisor review** counts colours per operator over 1, 2, or 4 weeks, flags repeated purples or reds, and lists every purple shift.
 7. **Process setup** holds the named route, shift budget, goal rule, and colour bands. Paste a route from a spreadsheet, or use **Restore standard route**.
 8. **Shift history → Export CSV**, **TV display** (Escape exits), **Insights**, and **Architecture**.

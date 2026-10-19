@@ -28,16 +28,25 @@ WHAT TO TRY — A FIVE-MINUTE WALKTHROUGH
 
 1. Weekly assemblies (the opening view)
    Click a day to review the 30 cells in use. Darker green means more of a
-   unit's standard hours are complete. Each unit has "Assign next shift";
-   each cell has "Assign job". Days after today show as Upcoming.
+   unit's standard hours are complete. Each cell has "New job"; each unit
+   has "Continue next shift". Days after today show as Upcoming.
+
+   Which button?
+   - New job: a unit that isn't on the board yet. The button at the top
+     asks for the cell; the one on a cell fills it in. Same form.
+   - Continue next shift: the same unit, picked up by the next shift.
+     Start is where the last shift stopped. Use it instead of a new job.
+   - Next unit this shift: the same people finished a unit and start
+     another one today, with the hours they have left.
+   - Edit (or click the unit): fix or update a shift already saved.
 
 2. Daily goals
    Select Daily goals. Each card leads with its cell and shows Start, Goal,
    and Stop by step name. Finished shifts use the workbook colours:
    red, yellow, green, purple. The key sits above the cards.
 
-3. Add a job: the same fields as one block of the Excel board
-   Select Add job (or Assign job on an empty cell). Cell, date, and shift
+3. New job: the same fields as one block of the Excel board
+   Select New job at the top or on a cell. Cell, date, and shift
    come from where you clicked; use Change to adjust them. Enter:
 
      Name(s):   Demo Operator
@@ -111,7 +120,7 @@ NEW IN V6: OPERATIONS HOURS, PEOPLE AND UNITS
   blue training, grey time not booked to any unit. Jordan Lee spent 2 h
   in the training center. Harper Moss, a trainer, has 8 h of training
   on the floor.
-- On the board, choose Add job. Set "Additional hours worked" to 4:
+- On the board, choose New job. Set "Additional hours worked" to 4:
   the goal covers 12 h. In the Waiting box enter 2.5 hours waiting for
   "Tooling / fixture". The goal line reads
   8.0 h regular + 4.0 h additional - 2.5 h waiting = 9.5 h to build.

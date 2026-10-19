@@ -8,9 +8,9 @@ Scope: A320 lofting, Step 1 — hand layup. The demo remains offline with fictio
 | --- | --- |
 | Show names of steps instead of numbers | Routes are named steps. Leads choose Start and Stop by name; cards, TV, history, and CSV show "13 · 3rd debulk" instead of a bare number. |
 | Overtime in hours; hide productive minutes | Overtime is entered in hours under More options. The shift budget lives in Process setup. |
-| Revisit the lead input screen: it asks for more than leads provide today | Add job mirrors one workbook block: Name(s), Job #, Hand, Part, Start, Goal (calculated), Stop, Comment. Cell, date, and shift come from where the lead clicked. The free-text assembly field is gone; Part is the route. |
+| Revisit the lead input screen: it asks for more than leads provide today | New job mirrors one workbook block: Name(s), Job #, Hand, Part, Start, Goal (calculated), Stop, Comment. Cell, date, and shift come from where the lead clicked. The free-text assembly field is gone; Part is the route. |
 | Jobs span multiple shifts; the employee can change | Next shift creates a new assignment linked to the previous one. History lists every operator. |
-| Click each workstation and assign people to it | Every cell in the 36-cell grid has Assign job, and every unit has Assign next shift. |
+| Click each workstation and assign people to it | Every cell in the grid has New job, and every unit has Continue next shift. |
 | Monday view of all 36 cells; hue shows health; top level is unit only, daily is the operator view | Weekly assemblies shades each cell by completed standard hours. Daily goals stays the operator view. |
 | Employees with purples that week or over a time range | Supervisor review counts red, yellow, green, and purple shifts per operator over 1, 2, or 4 weeks and flags repeats. |
 | Colour coding is familiar; stick to it | Finished shifts use the workbook's red, yellow, green, and purple bands. |
@@ -23,7 +23,7 @@ Reference: `Production Board- QUEST 2026.xlsx`, inspected read-only. No workbook
 
 | Evidence | Finding | Prototype decision |
 | --- | --- | --- |
-| `Production Board - New`, rows 5–12 of each cell | Each cell/shift block: Name, Job #, Hand, Part, Start, Goal, Stop, Comment | The Add job form uses the same fields in the same order |
+| `Production Board - New`, rows 5–12 of each cell | Each cell/shift block: Name, Job #, Hand, Part, Start, Goal, Stop, Comment | The New job form uses the same fields in the same order |
 | `Production Board - New!E4:AS4` | 21 day/shift columns, third shift first (M3, M1, M2 … SU2) | Production-day order 3 → 1 → 2 |
 | `Production Board - New!C5:C277` | 35 cell labels; one is A21 | 36 demo cells per the meeting; confirm the roster |
 | `Data Sheet`, route columns K–AL | Named routes per part (Inner Bondment, Inner Skin, and IB/IS transition routes) with minutes per step and cumulative hours, including 0-minute reminder steps | Routes are named steps with standard minutes; 0-minute checkpoints are allowed |
@@ -67,7 +67,7 @@ ST's answer to "may leads enter hours?": yes, for now. Hours per unit come from 
 | --- | --- |
 | Floor screen should show completion by cell | TV display → Unit / cell grid (v5) |
 | History of the unit, not just the operator | Unit history opens with whole-unit totals: time study earned, hours to build, waiting by reason |
-| Continue the existing job instead of adding one | Add job starts a new unit; Update / Next shift / Next unit continue it (v4–v5) |
+| Continue the existing job instead of adding one | New job starts a new unit; Edit / Continue next shift / Next unit this shift work from an existing one (v4–v5; renamed 10/19) |
 | Delete button for errors | Remove and Restore (v5) |
 | Make sure each person has their required hours, automatically | Each person's day = standard day + additional hours entered by the lead; regular hours fill in from what is left, across cells |
 | Dead time from unit to unit | Operator day shows time not booked to any unit or training; Insights lists it per person |
