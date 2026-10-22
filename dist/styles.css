@@ -142,3 +142,22 @@ button.tl-label{cursor:pointer}button.tl-label:hover{background:#eef5f0}button.t
 .display-panel{margin-top:24px}
 @media(max-width:1100px){.tv-cells{grid-template-columns:repeat(min(var(--cols),3),minmax(0,1fr))}.tv-mode .tv-cells{grid-template-rows:none;height:auto!important}.tv-cell{height:130px}}
 @media(max-width:700px){.tv-cells{grid-template-columns:repeat(2,minmax(0,1fr))}.tl-head{display:none}.tl-row{grid-template-columns:1fr;gap:6px}.tv-mode .tl-row{grid-template-columns:1fr}.line-health{gap:6px 14px}}
+
+/* Quick tour: a first-visit offer, a highlighted part of the screen, and a short tip beside it. */
+.tour-button{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border:1px solid #d9e2df;border-radius:8px;background:white;color:#4f6266;font-size:16px;font-weight:700;cursor:pointer}
+.tour-button:hover{background:#f0f5f3;color:var(--green)}
+.tv-mode .tour-button,.tv-mode .tour-invite{display:none}
+.tour-block{position:fixed;inset:0;z-index:50}
+.tour-spot{position:fixed;z-index:51;border-radius:12px;pointer-events:none;box-shadow:0 0 0 3px var(--lime),0 0 0 9999px #0c2529a8;transition:top .25s,left .25s,width .25s,height .25s}
+.tour-card,.tour-invite{z-index:52;background:white;color:var(--ink);border:1px solid #dce5de;border-radius:14px;box-shadow:0 18px 60px #0c252940;padding:18px 20px 16px;width:min(340px,calc(100vw - 32px))}
+.tour-card{position:fixed;top:16px;left:16px;transition:top .25s,left .25s}
+.tour-card h2,.tour-invite h2{margin:0 0 6px;font-size:18px;line-height:1.25}
+.tour-card p,.tour-invite p{margin:0;font-size:15px;line-height:1.5;color:#40555a}
+.tour-card .tour-count{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--green);margin-bottom:6px}
+.tour-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:16px}
+.tour-actions>span{display:flex;gap:8px}
+.tour-actions .button{padding:9px 14px}
+.tour-skip{background:none;border:0;padding:6px 0;font-size:13px;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
+.tour-invite{position:fixed;right:24px;bottom:24px}
+.tour-invite .tour-actions{justify-content:flex-end}
+@media(max-width:600px){.tour-invite{right:16px;left:16px;bottom:16px;width:auto}}

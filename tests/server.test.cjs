@@ -5,7 +5,7 @@ const os=require('node:os');
 const path=require('node:path');
 const http=require('node:http');
 const {createServer}=require('../server/server.js');
-const {createSync}=require('../dist/sync.js');
+const {createSync,mergeBoards}=require('../dist/sync.js');
 
 const quiet={warn(){},error(){},log(){}};
 const board=(note='')=>({version:5,jobs:[{id:'a',job:'DEMO-1',note}],history:[],processes:[]});
@@ -79,19 +79,109 @@ test('screens hear about a save through the live event stream',async()=>{
  }finally{await s.close();}
 });
 
-test('two screens share one board: the first seeds it, the second loads it, and a stale save takes the newer board',async()=>{
+test('two screens share one board: the first seeds it, the second loads it, and a stale save merges into the newer board',async()=>{
  const s=await start();
  try{
   const lead=[],tv=[];
   const a=createSync({fetch,base:s.base,onRemote:(d,m)=>lead.push([m.reason,d.jobs[0].note])});
   assert.equal(await a.connect(board('seed')),true);assert.equal(a.revision,1);assert.deepEqual(lead,[]);
-  const b=createSync({fetch,base:s.base,onRemote:(d,m)=>tv.push([m.reason,d.jobs[0].note])});
-  assert.equal(await b.connect(board('ignored')),true);assert.deepEqual(tv,[['load','seed']]);
+  const b=createSync({fetch,base:s.base,onRemote:(d,m)=>tv.push([m.reason,d.jobs[0].note,m.clashes])});
+  assert.equal(await b.connect(board('ignored')),true);assert.deepEqual(tv,[['load','seed',undefined]]);
   await a.save(board('lead edit'));assert.equal(a.revision,2);
+  // Both changed the same field: the later save keeps its value and says so.
   await b.save(board('tv edit on an old board'));
-  assert.deepEqual(tv.at(-1),['conflict','lead edit']);assert.equal(b.revision,2);
-  await b.save(board('tv edit after reload'));assert.equal(b.revision,3);
-  await a.refresh();assert.deepEqual(lead.at(-1),['update','tv edit after reload']);
+  assert.deepEqual(tv.at(-1),['merged','tv edit on an old board',1]);assert.equal(b.revision,3);assert.equal(b.unsaved,false);
+  await a.refresh();assert.deepEqual(lead.at(-1),['update','tv edit on an old board']);
+ }finally{await s.close();}
+});
+
+const job=(id,fields={})=>({id,job:id.toUpperCase(),status:'on-track',comment:'',...fields});
+const shared=()=>({version:5,processes:[{id:'p',revision:1}],jobs:[job('a'),job('b')],history:[{id:'h1',at:'1'}],display:{cellCount:30}});
+
+test('a merge keeps both screens\' new jobs, history, and edits to different fields',()=>{
+ const base=shared();
+ const local=structuredClone(base),remote=structuredClone(base),clash={count:0};
+ local.jobs.push(job('mine'));local.history.unshift({id:'h-mine',at:'3'});local.jobs[0].status='blocked';
+ remote.jobs.push(job('theirs'));remote.history.unshift({id:'h-theirs',at:'2'});remote.jobs[0].comment='Waiting on tooling';remote.display.cellCount=36;
+ const merged=mergeBoards(base,local,remote,clash);
+ assert.deepEqual(merged.jobs.map(j=>j.id),['a','b','theirs','mine']);
+ assert.deepEqual(merged.history.map(h=>h.id),['h-mine','h-theirs','h1']);
+ assert.equal(merged.jobs[0].status,'blocked');assert.equal(merged.jobs[0].comment,'Waiting on tooling');
+ assert.equal(merged.display.cellCount,36);assert.equal(clash.count,0);
+});
+
+test('a merge counts same-field clashes, honours removals, and keeps a removed record that was edited here',()=>{
+ const base=shared();
+ const local=structuredClone(base),remote=structuredClone(base),clash={count:0};
+ local.jobs[0].status='blocked';remote.jobs[0].status='at-risk';
+ remote.jobs=remote.jobs.filter(j=>j.id!=='b');
+ const merged=mergeBoards(base,local,remote,clash);
+ assert.equal(merged.jobs[0].status,'blocked');assert.equal(clash.count,1);
+ assert.deepEqual(merged.jobs.map(j=>j.id),['a']);
+ const edited=structuredClone(base);edited.jobs[1].comment='Kept';
+ assert.deepEqual(mergeBoards(base,edited,remote).jobs.map(j=>j.id),['a','b']);
+ assert.equal(mergeBoards(base,base,remote),remote);
+});
+
+// A fetch that can drop off the network, like a lead PC losing Wi-Fi.
+const flaky=()=>{const f=async(...args)=>{if(f.down)throw Error('network down');return fetch(...args);};f.down=false;return f;};
+const manualTimers=()=>{const t={pending:[],setTimeout(fn){t.pending.push(fn);return t.pending.length;},clearTimeout(){}};return t;};
+const twoJobs=(a,b)=>({version:5,jobs:[job('a',{comment:a}),job('b',{comment:b})],history:[],processes:[]});
+
+test('two leads saving at the same moment both keep their job',async()=>{
+ const s=await start();
+ try{
+  const notices=[],seen=(d,m)=>notices.push([m.reason,m.clashes]);
+  const a=createSync({fetch,base:s.base,onRemote:seen}),b=createSync({fetch,base:s.base,onRemote:seen});
+  await a.connect(twoJobs('',''));await b.connect(null);notices.length=0;
+  await Promise.all([a.save(twoJobs('lead A','')),b.save(twoJobs('','lead B'))]);
+  const saved=(await (await fetch(s.base+'/api/state')).json()).data;
+  assert.deepEqual(saved.jobs.map(j=>j.comment),['lead A','lead B']);
+  assert.deepEqual(notices,[['merged',0]]);
+ }finally{await s.close();}
+});
+
+test('work done while a PC is offline is merged and saved when it reconnects',async()=>{
+ const s=await start();
+ try{
+  const net=flaky(),timers=manualTimers(),statuses=[];
+  const a=createSync({fetch,base:s.base});
+  const b=createSync({fetch:net,base:s.base,timers,onStatus:x=>statuses.push(x)});
+  await a.connect(twoJobs('',''));await b.connect(null);
+  net.down=true;
+  await b.save(twoJobs('','offline 1'));await b.save({...twoJobs('','offline 2'),jobs:[...twoJobs('','offline 2').jobs,job('c',{comment:'new offline'})]});
+  assert.equal(statuses.at(-1),'offline');assert.equal(b.unsaved,true);
+  await a.save(twoJobs('online edit',''));
+  net.down=false;await timers.pending.at(-1)();
+  const saved=(await (await fetch(s.base+'/api/state')).json()).data;
+  assert.deepEqual(saved.jobs.map(j=>[j.id,j.comment]),[['a','online edit'],['b','offline 2'],['c','new offline']]);
+  assert.equal(b.unsaved,false);assert.equal(statuses.at(-1),'saved');
+ }finally{await s.close();}
+});
+
+test('a reconnecting screen with unsaved work merges the newer board instead of replacing its own',async()=>{
+ const s=await start();
+ try{
+  const net=flaky(),seen=[];
+  const a=createSync({fetch,base:s.base});
+  const b=createSync({fetch:net,base:s.base,timers:manualTimers(),onRemote:(d,m)=>seen.push([m.reason,d.jobs.map(j=>j.comment)])});
+  await a.connect(twoJobs('',''));await b.connect(null);
+  net.down=true;await b.save(twoJobs('','offline'));
+  await a.save(twoJobs('online',''));
+  net.down=false;await b.refresh();
+  assert.deepEqual(seen.at(-1),['merged',['online','offline']]);
+  const saved=(await (await fetch(s.base+'/api/state')).json()).data;
+  assert.deepEqual(saved.jobs.map(j=>j.comment),['online','offline']);
+ }finally{await s.close();}
+});
+
+test('two screens seeding an empty server do not duplicate the board',async()=>{
+ const s=await start();
+ try{
+  const a=createSync({fetch,base:s.base}),b=createSync({fetch,base:s.base});
+  await Promise.all([a.connect(twoJobs('seed A','')),b.connect({version:5,jobs:[job('x')],history:[],processes:[]})]);
+  const saved=(await (await fetch(s.base+'/api/state')).json()).data;
+  assert.ok([['a','b'],['x']].some(ids=>JSON.stringify(ids)===JSON.stringify(saved.jobs.map(j=>j.id))),saved.jobs.map(j=>j.id).join());
  }finally{await s.close();}
 });
 

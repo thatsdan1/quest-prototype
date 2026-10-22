@@ -150,7 +150,27 @@ button.tl-label{cursor:pointer}button.tl-label:hover{background:#eef5f0}button.t
 .display-panel{margin-top:24px}
 @media(max-width:1100px){.tv-cells{grid-template-columns:repeat(min(var(--cols),3),minmax(0,1fr))}.tv-mode .tv-cells{grid-template-rows:none;height:auto!important}.tv-cell{height:130px}}
 @media(max-width:700px){.tv-cells{grid-template-columns:repeat(2,minmax(0,1fr))}.tl-head{display:none}.tl-row{grid-template-columns:1fr;gap:6px}.tv-mode .tl-row{grid-template-columns:1fr}.line-health{gap:6px 14px}}
+
+/* Quick tour: a first-visit offer, a highlighted part of the screen, and a short tip beside it. */
+.tour-button{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border:1px solid #d9e2df;border-radius:8px;background:white;color:#4f6266;font-size:16px;font-weight:700;cursor:pointer}
+.tour-button:hover{background:#f0f5f3;color:var(--green)}
+.tv-mode .tour-button,.tv-mode .tour-invite{display:none}
+.tour-block{position:fixed;inset:0;z-index:50}
+.tour-spot{position:fixed;z-index:51;border-radius:12px;pointer-events:none;box-shadow:0 0 0 3px var(--lime),0 0 0 9999px #0c2529a8;transition:top .25s,left .25s,width .25s,height .25s}
+.tour-card,.tour-invite{z-index:52;background:white;color:var(--ink);border:1px solid #dce5de;border-radius:14px;box-shadow:0 18px 60px #0c252940;padding:18px 20px 16px;width:min(340px,calc(100vw - 32px))}
+.tour-card{position:fixed;top:16px;left:16px;transition:top .25s,left .25s}
+.tour-card h2,.tour-invite h2{margin:0 0 6px;font-size:18px;line-height:1.25}
+.tour-card p,.tour-invite p{margin:0;font-size:15px;line-height:1.5;color:#40555a}
+.tour-card .tour-count{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--green);margin-bottom:6px}
+.tour-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:16px}
+.tour-actions>span{display:flex;gap:8px}
+.tour-actions .button{padding:9px 14px}
+.tour-skip{background:none;border:0;padding:6px 0;font-size:13px;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
+.tour-invite{position:fixed;right:24px;bottom:24px}
+.tour-invite .tour-actions{justify-content:flex-end}
+@media(max-width:600px){.tour-invite{right:16px;left:16px;bottom:16px;width:auto}}
 </style>
+
 
 
 
@@ -179,7 +199,7 @@ button.tl-label{cursor:pointer}button.tl-label:hover{background:#eef5f0}button.t
     <div class="sidebar-bottom"><div class="prototype-note"><span class="mini-label">QUEST CAPSTONE</span><strong>Built for the floor.</strong><p>Prototype v7<br>Fictional demonstration data</p></div><button class="reset-button" id="reset-demo"><span data-icon="reset"></span>Reset demo data</button><div class="profile"><span class="avatar">SL</span><div>Shift lead<small>Demo workspace</small></div><span class="profile-dot"></span></div></div>
   </aside>
   <div class="app-shell">
-    <header class="topbar"><div class="breadcrumb">A320 program <span>/</span> Lofting <span>/</span> <strong id="breadcrumb-page">Production board</strong></div><div class="topbar-right"><button class="alert-bell" id="alert-bell" data-page="alerts" aria-label="Station alerts"><span data-icon="alert"></span><b id="alert-count"></b></button><span class="demo-badge">DEMO</span><span class="save-status" id="save-status">Saved on this device</span><span class="top-avatar">SL</span></div></header>
+    <header class="topbar"><div class="breadcrumb">A320 program <span>/</span> Lofting <span>/</span> <strong id="breadcrumb-page">Production board</strong></div><div class="topbar-right"><button class="tour-button" id="tour-start" type="button" aria-label="Take the tour" title="Take the tour">?</button><button class="alert-bell" id="alert-bell" data-page="alerts" aria-label="Station alerts"><span data-icon="alert"></span><b id="alert-count"></b></button><span class="demo-badge">DEMO</span><span class="save-status" id="save-status">Saved on this device</span><span class="top-avatar">SL</span></div></header>
     <main id="main" tabindex="-1">
       <div class="page-heading"><div><div class="eyebrow">A320 INNER BONDMENT</div><h1 id="page-title">Production board<span class="title-dot"></span></h1><p id="page-subtitle">A clear plan. A shared goal. Every shift.</p></div><div class="heading-actions"><button class="button" id="tv-toggle"><span data-icon="monitor"></span><span id="tv-label">TV display</span></button><button class="button primary" id="add-job"><span data-icon="plus"></span>New job</button></div></div>
       <div id="metrics" class="metrics"></div>
@@ -550,24 +570,69 @@ function initWorkflow(){
    changes as they happen. Opened as a file, the app stays on this device's browser storage. fetch and EventSource are injected so tests can run in Node. */
 (function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory();else root.QuestSync=factory();})(typeof globalThis!=='undefined'?globalThis:this,function(){
 'use strict';
-// Saves send the whole board with the revision it was based on. The server refuses a save based on an older revision, and this screen
-// takes the newer board instead (onRemote with reason 'conflict'), so two screens never silently overwrite each other.
+// Key order never counts as a change.
+const canon=v=>JSON.stringify(v,(k,x)=>x&&typeof x==='object'&&!Array.isArray(x)?Object.fromEntries(Object.keys(x).sort().map(key=>[key,x[key]])):x);
+const same=(a,b)=>canon(a)===canon(b);
+const isPlain=v=>!!v&&typeof v==='object'&&!Array.isArray(v);
+const isRecords=v=>Array.isArray(v)&&v.length>0&&v.every(x=>isPlain(x)&&typeof x.id==='string');
+
+// Three-way merge of two boards that both started from `base`. Lists of records with an id (jobs, history, processes, time off the
+// unit) merge record by record and records merge field by field, so two leads changing different jobs, or different fields of one
+// job, both keep their change. Where both changed the same field, this screen's value wins (it is the newer edit) and clash.count
+// says how often that happened.
+function mergeBoards(base,local,remote,clash={count:0}){
+ if(same(local,remote))return local;
+ if(same(local,base))return remote;
+ if(same(remote,base))return local;
+ if((isRecords(local)||isRecords(remote))&&[base,local,remote].every(v=>v==null||Array.isArray(v)))return mergeRecords(base||[],local||[],remote||[],clash);
+ if(isPlain(local)&&isPlain(remote)){
+  const out={};
+  for(const key of new Set([...Object.keys(remote),...Object.keys(local)])){const v=mergeBoards(isPlain(base)?base[key]:undefined,local[key],remote[key],clash);if(v!==undefined)out[key]=v;}
+  return out;
+ }
+ clash.count++;return local;
+}
+function mergeRecords(base,local,remote,clash){
+ const index=list=>new Map(list.map(x=>[x.id,x])),b=index(base),l=index(local),r=index(remote);
+ // The other screen's order, with this screen's new records where it put them: in front (history is newest first) or at the end.
+ const lead=[];for(const x of local){if(b.has(x.id)||r.has(x.id))break;lead.push(x);}
+ const tail=local.filter(x=>!r.has(x.id)&&!lead.includes(x)),out=[];
+ for(const {id} of [...lead,...remote,...tail]){const v=mergeBoards(b.get(id),l.get(id),r.get(id),clash);if(v!==undefined)out.push(v);}
+ return out;
+}
+
+// Saves send the whole board with the revision it was based on. The server refuses a save based on an older revision and returns the
+// newer board; this screen merges its unsaved changes into that board and saves the result, so a lead who saved at the same moment,
+// or worked through a dropped connection, loses nothing.
 function createSync({fetch,EventSource=null,base='',onRemote=()=>{},onStatus=()=>{},retryMs=5000,timers=globalThis}){
- let revision=null,connected=false,saving=false,queued=null,announced=0,retry=null,events=null;
+ // board: the server's copy at `revision`, the common starting point for a merge. pending: this screen's newest board the server
+ // has not taken yet; edits counts the saves asked for, so a save that finishes after newer edits keeps them pending.
+ let revision=null,board=null,pending=null,edits=0,connected=false,saving=false,announced=0,retry=null,events=null;
+ const copy=v=>v==null?v:JSON.parse(JSON.stringify(v));
  async function call(method,body){
   const res=await fetch(base+'/api/state',{method,cache:'no-store',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined});
   let json=null;try{json=await res.json();}catch{}
   return {status:res.status,ok:res.ok,json};
  }
+ // A newer board from the server. With nothing unsaved here, show it; otherwise merge this screen's changes into it.
+ // Two screens seeding a new server share no starting point, so the one that saved second takes the first one's board.
+ function receive(remote,reason){
+  const theirs=remote.data;revision=remote.revision;
+  if(!pending||board==null){const seeding=!!pending;pending=null;board=theirs;if(theirs)onRemote(theirs,{reason:seeding?'load':reason});return;}
+  const clash={count:0},merged=mergeBoards(board,copy(pending),theirs,clash);board=theirs;
+  if(same(merged,theirs)){pending=null;onRemote(theirs,{reason:'update'});return;}
+  pending=merged;edits++;onRemote(merged,{reason:'merged',clashes:clash.count});
+ }
  async function refresh(){
   const r=await call('GET');if(!r.ok||r.json?.server!=='quest-board')throw Error('Board server unavailable.');
-  if(r.json.revision!==revision){revision=r.json.revision;if(r.json.data)onRemote(r.json.data,{reason:'update'});}
-  onStatus('saved');return r.json;
+  if(r.json.revision!==revision)receive(r.json,'update');
+  if(pending)await flush();else onStatus('saved');
+  return r.json;
  }
  // Resolves false when nothing answers as a board server, so the caller keeps device storage.
  async function connect(local){
   let body;try{const r=await call('GET');if(!r.ok||r.json?.server!=='quest-board')return false;body=r.json;}catch{return false;}
-  connected=true;revision=body.revision;
+  connected=true;revision=body.revision;board=body.data;
   // The first screen on a new server seeds it with this device's board.
   if(body.data)onRemote(body.data,{reason:'load'});else await save(local);
   if(EventSource){
@@ -576,32 +641,35 @@ function createSync({fetch,EventSource=null,base='',onRemote=()=>{},onStatus=()=
    events.onerror=()=>onStatus('offline');
    events.onopen=()=>{if(!saving)refresh().catch(()=>onStatus('offline'));};
   }
-  if(!saving)onStatus('saved');
+  if(!saving&&!pending)onStatus('saved');
   return true;
  }
- async function save(data){
-  if(!connected)return;
-  if(saving){queued=data;return;}
-  saving=true;timers.clearTimeout(retry);onStatus('saving');
+ function save(data){
+  if(!connected)return Promise.resolve();
+  pending=data;edits++;return flush();
+ }
+ async function flush(){
+  if(saving)return;
+  saving=true;timers.clearTimeout(retry);
   try{
-   const r=await call('PUT',{baseRevision:revision,data});
-   if(r.status===409&&r.json){revision=r.json.revision;queued=null;onRemote(r.json.data,{reason:'conflict'});}
-   else if(r.ok&&Number.isInteger(r.json?.revision))revision=r.json.revision;
-   else throw Error(r.json?.error||`Save failed (${r.status}).`);
-  }catch(err){
-   // Keep the newest unsaved board and try again; the device copy is already saved.
-   saving=false;queued=queued||data;onStatus('offline',err);
-   retry=timers.setTimeout(()=>{const next=queued;queued=null;return save(next);},retryMs);
-   return;
-  }
-  saving=false;
-  if(queued){const next=queued;queued=null;await save(next);return;}
+   while(pending){
+    onStatus('saving');
+    const sent=copy(pending),asked=edits;let r;
+    try{r=await call('PUT',{baseRevision:revision,data:sent});}catch(err){return offline(err);}
+    if(r.status===409&&r.json?.data){receive(r.json,'conflict');continue;}
+    if(!r.ok||!Number.isInteger(r.json?.revision))return offline(Error(r.json?.error||`Save failed (${r.status}).`));
+    revision=r.json.revision;board=sent;
+    if(edits===asked)pending=null;
+   }
+  }finally{saving=false;}
   if(announced>revision){await refresh().catch(()=>onStatus('offline'));return;}
   onStatus('saved');
  }
- return {connect,save,refresh,close(){events?.close();timers.clearTimeout(retry);},get connected(){return connected;},get revision(){return revision;}};
+ // Keep the unsaved board and try again; the device copy is already saved.
+ function offline(err){onStatus('offline',err);timers.clearTimeout(retry);retry=timers.setTimeout(()=>flush(),retryMs);}
+ return {connect,save,refresh,close(){events?.close();timers.clearTimeout(retry);},get connected(){return connected;},get revision(){return revision;},get unsaved(){return !!pending;}};
 }
-return {createSync};
+return {createSync,mergeBoards};
 });
 
 ;
@@ -689,7 +757,7 @@ function saveState(){const result=storageAdapter.save(state);if(sync?.connected)
 // Shared board when server/server.js serves the app: lead PCs and floor TVs see one board. Opened as a file, the board stays on this device.
 const isBoard=data=>[2,3,4,5].includes(data?.version)&&Array.isArray(data.jobs)&&Array.isArray(data.history);
 const sync=/^https?:$/.test(location.protocol)&&window.fetch?QuestSync.createSync({fetch:(...args)=>window.fetch(...args),EventSource:window.EventSource,onRemote:adoptBoard,onStatus:syncStatus}):null;
-function adoptBoard(data,{reason}){if(!isBoard(data))return;try{state=upgradeState(data);}catch{return;}storageAdapter.save(state);if(!state.processes.some(p=>p.id===selectedProcess))selectedProcess=state.processes[0].id;renderProcessChoices();renderCellChoices();render();if(reason==='conflict')notify('Another screen saved first. Showing the latest board; re-enter your last change.');}
+function adoptBoard(data,{reason,clashes=0}){if(!isBoard(data))return;try{state=upgradeState(data);}catch{return;}storageAdapter.save(state);if(!state.processes.some(p=>p.id===selectedProcess))selectedProcess=state.processes[0].id;renderProcessChoices();renderCellChoices();render();if(reason==='merged')notify(clashes?`Another screen saved too. Both changes are on the board; ${clashes} field${clashes===1?' was':'s were'} changed on both, and yours ${clashes===1?'was':'were'} kept.`:'Another screen saved too. Both changes are on the board.');}
 function syncStatus(status){const el=$('#save-status');el.textContent={saving:'Saving to the board server…',saved:'Saved to the board server',offline:'Board server unreachable · retrying'}[status]||el.textContent;el.classList.toggle('offline',status==='offline');}
 function recordRevision(p){state.revisions[p.id]={...state.revisions[p.id],[p.revision]:processConfig(p)};}
 function statusOf(j){if(j.training)return 'training';if(j.closed&&j.status==='blocked')return 'blocked';const rating=ratingOf(j);if(rating)return 'rating-'+rating;if(j.goal===j.start&&j.end<j.total)return j.status==='blocked'?'blocked':'no-target';if(j.end>=j.goal)return 'goal-met';if(j.closed)return 'behind';return j.status;}
@@ -826,6 +894,127 @@ initWorkflow();renderProcessChoices();renderCellChoices();render();saveState();
 // A floor TV opens straight into the display: ?display=tv, optionally &layout=cells|timeline|goals. Controls fade until the mouse moves over them.
 {const params=new URLSearchParams(location.search);if(params.get('display')==='tv'){document.body.classList.add('kiosk');toggleTv();if(TV_LAYOUTS.includes(params.get('layout'))){tvLayout=params.get('layout');render();}}}
 sync?.connect(state).then(shared=>{if(shared)$('#reset-dialog p').textContent='This restores the fictional sample jobs and history for every screen on this board server.';});
+
+;
+/* Quick tour. A first visit offers it once (Take the tour / Not now); the ? button in the top bar replays it. Each stop highlights one
+   part of the screen with a two-line tip. Never shown on a floor TV. Placement math and the stops are exported so tests run in Node. */
+(function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory();else{root.QuestTour=factory();if(typeof document!=='undefined')root.QuestTour.init();}})(typeof globalThis!=='undefined'?globalThis:this,function(){
+'use strict';
+const SEEN_KEY='quest-tour-v1';
+
+// view: the board view a stop needs. A stop whose part of the screen is hidden (a phone hides the sidebar) is skipped.
+const STOPS=[
+ {target:'.view-toggle',view:'day',title:'Two views',text:'Daily goals shows each shift\'s people and their goal. Weekly assemblies shows every cell and how far its unit has come.'},
+ {target:'.board-toolbar',title:'Choose what you see',text:'Pick the day, then narrow it to one shift or one work cell.'},
+ {target:'#add-job',title:'New job',text:'Start a unit that isn\'t on the board yet. Type the names and job number; the goal fills itself in.'},
+ {target:'.assembly-cell:not(.empty-cell)',view:'week',title:'One tile per cell',text:'Darker green means the unit is further along. Continue next shift hands a unit to the next shift.'},
+ {target:'#alert-bell',title:'Station alerts',text:'A count shows when a station is blocked or keeps waiting. Open it to see why.'},
+ {target:'#tv-toggle',title:'Floor TV',text:'Puts the board full screen on the floor TV. People\'s results show as colours, not numbers.'},
+ {target:'nav[aria-label="Main navigation"]',title:'Everything else',text:'Operator day follows one person, and Shift history keeps every change. Insights and Supervisor review show patterns.'},
+ {target:'#save-status',title:'Saved and shared',text:'Shows whether your changes are saved, and whether other screens can see them.'},
+ {target:'#tour-start',title:'That\'s the tour',text:'Press ? any time to see it again.'},
+];
+
+// Where the tip card goes: below the highlighted part, else above, else beside it, else along the bottom of the screen.
+function placeCard(target,card,viewport,gap=14,margin=16){
+ const clamp=(v,lo,hi)=>Math.max(lo,Math.min(v,Math.max(lo,hi)));
+ const across=clamp(target.left+target.width/2-card.width/2,margin,viewport.width-card.width-margin);
+ const down=clamp(target.top,margin,viewport.height-card.height-margin);
+ if(target.bottom+gap+card.height<=viewport.height-margin)return {side:'below',top:target.bottom+gap,left:across};
+ if(target.top-gap-card.height>=margin)return {side:'above',top:target.top-gap-card.height,left:across};
+ if(target.right+gap+card.width<=viewport.width-margin)return {side:'right',top:down,left:target.right+gap};
+ if(target.left-gap-card.width>=margin)return {side:'left',top:down,left:target.left-gap-card.width};
+ return {side:'bottom',top:viewport.height-card.height-margin,left:clamp(viewport.width/2-card.width/2,margin,viewport.width-card.width-margin)};
+}
+
+function init(){
+ const store={get(){try{return localStorage.getItem(SEEN_KEY);}catch{return null;}},set(v){try{localStorage.setItem(SEEN_KEY,v);}catch{}}};
+ const onFloorTv=()=>document.body.classList.contains('tv-mode')||document.body.classList.contains('kiosk')||new URLSearchParams(location.search).get('display')==='tv';
+ const visible=el=>{if(!el)return false;const r=el.getBoundingClientRect();return r.width>0&&r.height>0&&getComputedStyle(el).visibility!=='hidden';};
+ const el=(tag,cls,html='')=>{const n=document.createElement(tag);if(cls)n.className=cls;n.innerHTML=html;return n;};
+ const press=selector=>{const b=document.querySelector(selector);if(b&&!b.classList.contains('selected')&&!b.classList.contains('active'))b.click();};
+ let active=null;
+
+ function start(){
+  if(active||onFloorTv())return;
+  invite?.remove();invite=null;store.set('seen');
+  const before={page:document.querySelector('.nav-item.active')?.dataset.page||'board',view:document.querySelector('.view-toggle .selected')?.dataset.view||'day',focus:document.activeElement};
+  press('.nav-item[data-page="board"]');
+  const block=el('div','tour-block'),spot=el('div','tour-spot'),card=el('div','tour-card',`<p class="tour-count" id="tour-count"></p><h2 id="tour-title"></h2><p id="tour-text"></p><div class="tour-actions"><button type="button" class="tour-skip">Skip tour</button><span><button type="button" class="button tour-back">Back</button><button type="button" class="button primary tour-next">Next</button></span></div>`);
+  card.setAttribute('role','dialog');card.setAttribute('aria-modal','true');card.setAttribute('aria-labelledby','tour-title');card.setAttribute('aria-describedby','tour-text');
+  // Only the stops this screen shows: a phone hides the sidebar, and the cell stop needs a unit on the board.
+  const stops=STOPS.filter(stop=>{if(stop.view)press(`.view-toggle [data-view="${stop.view}"]`);return visible(document.querySelector(stop.target));});
+  if(!stops.length)return;
+  document.body.append(block,spot,card);
+  active={pos:-1,stops,block,spot,card,before};
+  card.querySelector('.tour-skip').onclick=end;
+  card.querySelector('.tour-back').onclick=()=>go(-1);
+  card.querySelector('.tour-next').onclick=()=>go(1);
+  document.addEventListener('keydown',keys,true);
+  addEventListener('resize',place);addEventListener('scroll',place,true);
+  go(1);
+ }
+ function go(step,from=active.pos){
+  const pos=from+step;
+  if(pos<0)return;
+  if(pos>=active.stops.length)return end();
+  const stop=active.stops[pos];
+  if(stop.view)press(`.view-toggle [data-view="${stop.view}"]`);
+  const target=document.querySelector(stop.target);
+  if(!visible(target))return go(step,pos);
+  active.pos=pos;active.target=target;
+  const q=sel=>active.card.querySelector(sel);
+  q('#tour-count').textContent=`${pos+1} of ${active.stops.length}`;
+  q('#tour-title').textContent=stop.title;
+  q('#tour-text').textContent=stop.text;
+  q('.tour-back').disabled=pos===0;
+  q('.tour-next').textContent=pos===active.stops.length-1?'Done':'Next';
+  const r=target.getBoundingClientRect();if(r.top<0||r.bottom>innerHeight)target.scrollIntoView({block:r.height<innerHeight*.75?'center':'start'});
+  place();
+  q('.tour-next').focus({preventScroll:true});
+ }
+ function place(){
+  if(!active?.target)return;
+  const r=active.target.getBoundingClientRect(),pad=6,s=active.spot.style;
+  s.top=`${r.top-pad}px`;s.left=`${r.left-pad}px`;s.width=`${r.width+pad*2}px`;s.height=`${r.height+pad*2}px`;
+  const box=active.card.getBoundingClientRect(),at=placeCard({top:r.top-pad,bottom:r.bottom+pad,left:r.left-pad,right:r.right+pad,width:r.width+pad*2},{width:box.width,height:box.height},{width:innerWidth,height:innerHeight});
+  active.card.style.top=`${Math.round(at.top)}px`;active.card.style.left=`${Math.round(at.left)}px`;active.card.dataset.side=at.side;
+ }
+ function keys(e){
+  if(!active)return;
+  if(e.key==='Escape'){e.preventDefault();e.stopPropagation();end();}
+  else if(e.key==='ArrowRight'){e.preventDefault();go(1);}
+  else if(e.key==='ArrowLeft'){e.preventDefault();go(-1);}
+  else if(e.key==='Tab'){const f=[...active.card.querySelectorAll('button:not(:disabled)')],i=f.indexOf(document.activeElement);e.preventDefault();f[(i+(e.shiftKey?-1:1)+f.length)%f.length].focus();}
+ }
+ // Puts the board back the way the person had it.
+ function end(){
+  if(!active)return;
+  const {block,spot,card,before}=active;active=null;
+  block.remove();spot.remove();card.remove();
+  document.removeEventListener('keydown',keys,true);removeEventListener('resize',place);removeEventListener('scroll',place,true);
+  press(`.nav-item[data-page="${before.page}"]`);
+  if(before.page==='board')press(`.view-toggle [data-view="${before.view}"]`);
+  (document.querySelector('#tour-start')||before.focus)?.focus?.();
+ }
+
+ // First visit on this browser: offer the tour once, without blocking the board.
+ let invite=null;
+ document.querySelector('#tour-start')?.addEventListener('click',start);
+ if(!store.get()&&!onFloorTv())setTimeout(()=>{
+  if(store.get()||onFloorTv()||active||document.querySelector('dialog[open]'))return;
+  invite=el('aside','tour-invite',`<h2>New here?</h2><p>A one-minute tour shows where everything is. You can open it later with the ? button at the top.</p><div class="tour-actions"><button type="button" class="button tour-later">Not now</button><button type="button" class="button primary tour-go">Take the tour</button></div>`);
+  invite.setAttribute('aria-label','Quick tour');
+  invite.querySelector('.tour-go').onclick=start;
+  invite.querySelector('.tour-later').onclick=()=>{store.set('dismissed');invite.remove();invite=null;};
+  document.body.append(invite);
+ },900);
+ return {start,end};
+}
+
+let api=null;
+return {STOPS,placeCard,init(){api=api||init();return api;},start(){return (api||this.init()).start();}};
+});
 
 </script>
 </body>

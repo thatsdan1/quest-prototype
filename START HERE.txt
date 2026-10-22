@@ -26,6 +26,12 @@ email preview or the ZIP viewer. You can also send just the standalone
 
 WHAT TO TRY — A FIVE-MINUTE WALKTHROUGH
 
+0. Quick tour (one minute)
+   The first time you open the board, a card in the corner offers a
+   tour. Choose "Take the tour" or "Not now". The ? button at the top
+   of the screen starts it again any time. Use Next / Back, the arrow
+   keys, or Esc to leave.
+
 1. Weekly assemblies (the opening view)
    Click a day to review the 30 cells in use. Darker green means more of a
    unit's standard hours are complete. Each cell has "New job"; each unit
